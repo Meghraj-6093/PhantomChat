@@ -85,7 +85,16 @@ function showApp() {
   
   // PWA Service Worker Registration
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.log('PWA Service Worker Registration Failed:', err));
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            window.location.reload();
+          }
+        });
+      });
+    }).catch(err => console.log('PWA Service Worker Registration Failed:', err));
   }
 
   loadMyProfile();
@@ -214,6 +223,10 @@ function wireUI() {
       const panel = b.dataset.panel;
       if (panel) {
         switchFeedOrChat(panel);
+      } else if (b.id === 'mbn-create') {
+        openModal('story-modal');
+      } else if (b.id === 'mbn-profile') {
+        openModal('profile-modal');
       }
     };
   });
@@ -391,7 +404,6 @@ function showTab(t) {
   $('tab-register').classList.toggle('active', t==='register');
   $('form-login').style.display    = t==='login'    ? 'block':'none';
   $('form-register').style.display = t==='register' ? 'block':'none';
-  $('reg-divider').style.display   = t==='register' ? 'block':'none';
   setAuthErr('');
 }
 function setAuthLoading(v) { $('auth-loading').style.display = v?'flex':'none'; }
@@ -968,8 +980,9 @@ async function loadFriendRequests() {
 }
 
 async function loadFriendsList() {
+  const el = $('friends-list'); showSkeleton(el, 3);
   const { data } = await sb.from('friends').select('friend_id').eq('user_id',me.id).eq('status','accepted');
-  const el = $('friends-list'); el.innerHTML='';
+  el.innerHTML='';
   if (!data?.length) { el.innerHTML='<div class="list-empty" style="padding:1rem;">No friends yet.</div>'; return; }
   for (const r of data) {
     const { data: u } = await sb.from('users').select('*').eq('id',r.friend_id).single(); if (!u) continue;
@@ -1015,8 +1028,9 @@ async function loadDMList() {
 }
 
 async function loadRooms() {
+  const el = $('rooms-inner'); showSkeleton(el, 3);
   const { data } = await sb.from('conversations').select('*').eq('type','room').order('created_at');
-  const el = $('rooms-inner'); el.innerHTML='';
+  el.innerHTML='';
   if (!data?.length) { el.innerHTML='<div class="list-empty">No rooms yet.</div>'; return; }
   data.forEach(r => {
     const item = buildChatItem({avatar:'🏠',name:r.name,preview:r.description||'',time:'',unread:0});
@@ -1027,9 +1041,10 @@ async function loadRooms() {
 }
 
 async function loadGroups() {
+  const el = $('groups-inner'); showSkeleton(el, 3);
   const { data: mbrs } = await sb.from('conversation_members').select('conversation_id,conversations(*)').eq('user_id',me.id);
   const groups = (mbrs||[]).filter(m=>m.conversations?.type==='group');
-  const el = $('groups-inner'); el.innerHTML='';
+  el.innerHTML='';
   if (!groups.length) { el.innerHTML='<div class="list-empty">No groups yet.</div>'; return; }
   groups.forEach(({conversations:g})=>{
     const item = buildChatItem({avatar:g.icon||'👥',name:g.name,preview:'',time:'',unread:0});
@@ -1644,25 +1659,24 @@ function switchPanel(panel){
 function showSkeleton(el, count=4) {
   el.innerHTML='';
   for(let i=0;i<count;i++){
-    const s=mk('div','skel-item');
-    const av=mk('div','skel-av skeleton');
-    const lines=mk('div','skel-lines');
-    lines.appendChild(mk('div','skel-line-a skeleton'));
-    lines.appendChild(mk('div','skel-line-b skeleton'));
+    const s=mk('div','skeleton-item');
+    const av=mk('div','sk-av');
+    const lines=mk('div','sk-lines');
+    lines.appendChild(mk('div','sk-line'));
+    lines.appendChild(mk('div','sk-line short'));
     s.append(av,lines);el.appendChild(s);
   }
 }
 function showSkeletonBubbles(el) {
   el.innerHTML='';
+  const container = mk('div','skeleton-bubble');
   const sides=['them','me','them','me','them'];
   sides.forEach(s=>{
-    const row=mk('div',`msg-row ${s}`);
-    const w=mk('div','msg-wrap');
-    const b=mk('div','bubble skeleton');
-    b.style.cssText=`height:${20+Math.random()*20}px;width:${120+Math.random()*100}px;background:none;`;
-    b.classList.add('skeleton');
-    w.appendChild(b);row.appendChild(w);el.appendChild(row);
+    const b=mk('div',s==='me'?'sk-bubble me':'sk-bubble');
+    b.style.width=`${120+Math.random()*100}px`;
+    container.appendChild(b);
   });
+  el.appendChild(container);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1681,7 +1695,7 @@ function buildChatItem({avatar,name,preview,time,unread,online}){
 }
 function renderAv(el,avatar){
   if(!el)return;
-  if(typeof avatar==='string'&&(avatar.startsWith('http')||avatar.startsWith('https'))){
+  if(typeof avatar==='string'&&(avatar.startsWith('http')||avatar.startsWith('https')||avatar.startsWith('data:image/'))){
     el.innerHTML=`<img src="${avatar}" alt="av" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
     el.style.background='none';
   } else if (avatar === '🏠') {
@@ -1692,9 +1706,13 @@ function renderAv(el,avatar){
     el.innerHTML = '<i data-lucide="users"></i>';
     el.style.background = 'var(--acc)';
     if (window.lucide) lucide.createIcons();
-  } else{
-    el.textContent=avatar||'?';
-    el.style.background=COLORS[(avatar||'?').codePointAt(0)%COLORS.length];
+  } else {
+    el.innerHTML = '<i data-lucide="user" style="width:50%;height:50%;color:var(--text3);"></i>';
+    el.style.background = 'var(--surface2)';
+    el.style.display = 'flex';
+    el.style.alignItems = 'center';
+    el.style.justifyContent = 'center';
+    if (window.lucide) lucide.createIcons();
   }
 }
 function openModal(id){$(id).style.display='flex';}
@@ -1818,6 +1836,16 @@ async function loadFeedStories() {
 async function loadFeedSuggestions() {
   const container = $('feed-right-suggestions-list');
   if (!container) return;
+
+  // Update current user profile details in feed right sidebar
+  if ($('feed-right-my-avatar')) renderAv($('feed-right-my-avatar'), myData.avatar || '?');
+  if ($('feed-right-my-username')) $('feed-right-my-username').textContent = myData.username ? '@' + myData.username : (me ? me.email || 'user' : 'user');
+  if ($('feed-right-my-name')) $('feed-right-my-name').textContent = myData.name || 'Me';
+  if ($('feed-right-switch-btn')) {
+    $('feed-right-switch-btn').onclick = () => {
+      openModal('profile-modal');
+    };
+  }
   
   // Fetch up to 5 users that are not myself and not currently friends
   const { data: users, error } = await sb.from('users')
@@ -1866,10 +1894,12 @@ async function loadFeedSuggestions() {
 async function loadFeedPosts() {
   const container = $('feed-posts-list');
   if (!container) return;
+  showSkeleton(container, 3);
   
   const { data: posts, error } = await sb.from('build_posts')
     .select('*, users(id, name, username, avatar), build_likes(user_id), build_comments(*, users(name, username))')
     .order('created_at', { ascending: false });
+  container.innerHTML = '';
     
   if (error) {
     container.innerHTML = `<div class="list-empty">Failed to load posts. Error: ${error.message}</div>`;

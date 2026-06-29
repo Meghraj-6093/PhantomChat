@@ -177,10 +177,6 @@ img{display:block;}
 .spin{width:18px;height:18px;border:2.5px solid var(--border2);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .avatar-picker-section label{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);display:block;margin-bottom:.5rem;}
-.avatar-grid{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.9rem;}
-.av-opt{width:36px;height:36px;border-radius:50%;font-size:1.1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0;}
-.av-opt.selected,.av-opt:hover{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-dim);}
-.avatar-grid.small .av-opt{width:30px;height:30px;font-size:.9rem;}
 .upload-label{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .9rem;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;cursor:pointer;font-size:.82rem;transition:all .2s;}
 .upload-label:hover{border-color:var(--acc);background:var(--surface);}
 
@@ -530,6 +526,7 @@ img{display:block;}
 
 /* ── RESPONSIVE ────────────────────────────────────────────*/
 @media(max-width:768px){
+  .nav-sidebar{display:none !important;}
   .mob-bottom-nav{display:flex;}
   .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:200;transform:translateX(-100%);width:min(320px,92vw);box-shadow:6px 0 32px rgba(0,0,0,.45);padding-bottom:env(safe-area-inset-bottom,0px);}
   .sidebar.mob-open{transform:translateX(0);}
@@ -580,6 +577,7 @@ img{display:block;}
   padding: 1.5rem 0.8rem;
   flex-shrink: 0;
   transition: width 0.3s ease;
+  overflow: hidden;
 }
 
 .nav-brand {
@@ -939,29 +937,7 @@ img{display:block;}
   font-weight: 600;
 }
 
-/* Responsive Overrides for Slim Nav & Instagram Layout */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .nav-sidebar {
-    width: 72px;
-    padding: 1.5rem 0.4rem;
-  }
-  .nav-brand-text, .nav-label {
-    display: none;
-  }
-  .nav-brand {
-    justify-content: center;
-    padding-left: 0;
-    padding-right: 0;
-  }
-  .nav-item {
-    justify-content: center;
-    padding: 0.75rem;
-  }
-  .nav-icon {
-    width:auto;
-    font-size: 1.45rem;
-  }
-}
+
 
 @media (max-width: 768px) {
   .nav-sidebar {
@@ -1280,19 +1256,8 @@ svg.lucide {
   letter-spacing: 0.05em;
 }
 
-/* Responsive collapse for Right Sidebar & Nav profile footer */
+/* Responsive collapse for Right Sidebar */
 @media (min-width: 769px) and (max-width: 1024px) {
-  .nav-profile-details, .nav-profile-logout {
-    display: none;
-  }
-  .nav-profile-block {
-    justify-content: center;
-    border-top: none;
-    padding-top: 0;
-  }
-  .nav-section-title {
-    display: none;
-  }
   .feed-right-sidebar {
     display: none;
   }
