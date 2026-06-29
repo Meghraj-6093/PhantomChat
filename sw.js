@@ -1,4 +1,4 @@
-const CACHE_NAME = 'phantomchat-v5';
+const CACHE_NAME = 'phantomchat-v6';
 const ASSETS = [
   './',
   './index.html',
