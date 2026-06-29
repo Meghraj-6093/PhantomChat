@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>PhantomChat</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ══ SPLASH SCREEN ══════════════════════════════════════ -->
+<div id="splash-screen">
+  <div class="splash-logo">
+    <div class="splash-icon">👻</div>
+    <div class="splash-name">PhantomChat</div>
+    <div class="splash-bar"><div class="splash-fill"></div></div>
+  </div>
+</div>
+
+<!-- ══ AUTH ═══════════════════════════════════════════════ -->
+<div class="auth-screen" id="auth-screen" style="display:none">
+  <div class="auth-bg"><div class="auth-orb o1"></div><div class="auth-orb o2"></div><div class="auth-orb o3"></div></div>
+  <div class="auth-card">
+    <div class="auth-logo"><div class="auth-logo-icon">👻</div><span class="auth-logo-name">PhantomChat</span></div>
+    <p class="auth-tagline">Disappear into conversation.</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login">Sign In</button>
+      <button class="auth-tab" id="tab-register">Sign Up</button>
+    </div>
+
+    <!-- LOGIN -->
+    <form id="form-login" onsubmit="return false">
+      <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com" autocomplete="email"/></div>
+      <div class="form-group"><label>Password</label>
+        <div class="pw-wrap"><input type="password" id="login-password" placeholder="Your password" autocomplete="current-password"/><button class="pw-eye" id="toggle-login-pw" type="button">👁</button></div>
+      </div>
+      <button class="auth-btn" id="btn-login-email" type="submit">Sign In →</button>
+    </form>
+    <div class="auth-divider"><span>or</span></div>
+    <button class="google-btn" id="btn-google-login">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+
+    <!-- REGISTER -->
+    <form id="form-register" style="display:none" onsubmit="return false">
+      <div class="form-group"><label>Display Name</label><input type="text" id="reg-name" placeholder="Your full name" maxlength="30"/></div>
+      <div class="form-group"><label>Username</label><input type="text" id="reg-username" placeholder="@username" maxlength="20" style="text-transform:lowercase;"/><span class="form-hint">Unique · can change once/week</span></div>
+      <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email"/></div>
+      <div class="form-group"><label>Password</label>
+        <div class="pw-wrap"><input type="password" id="reg-password" placeholder="Min 6 characters"/><button class="pw-eye" id="toggle-reg-pw" type="button">👁</button></div>
+      </div>
+      <div class="avatar-picker-section"><label>Pick an Avatar</label><div class="avatar-grid" id="avatar-grid"></div></div>
+      <button class="auth-btn" id="btn-register-email" type="submit">Create Account →</button>
+    </form>
+    <div id="reg-divider" style="display:none">
+      <div class="auth-divider"><span>or</span></div>
+      <button class="google-btn" id="btn-google-register">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+    </div>
+    <div class="auth-error" id="auth-error" style="display:none"></div>
+    <div class="auth-loading" id="auth-loading" style="display:none"><div class="spin"></div> Please wait…</div>
+  </div>
+</div>
+
+<!-- ══ 2FA SCREEN ══════════════════════════════════════════ -->
+<div class="tfa-screen" id="tfa-screen" style="display:none">
+  <div class="tfa-card">
+    <div class="tfa-icon">🔐</div>
+    <h2 class="tfa-title">Two-Factor Authentication</h2>
+    <p class="tfa-sub">Enter the 6-digit code sent to your email</p>
+    <div class="otp-inputs" id="otp-inputs">
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric"/>
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric"/>
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric"/>
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric"/>
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric"/>
+      <input class="otp-box" maxlength="1" type="text" inputmode="numeric"/>
+    </div>
+    <button class="auth-btn" id="btn-verify-otp">Verify Code →</button>
+    <button class="tfa-resend" id="btn-resend-otp">Resend code</button>
+    <div class="auth-error" id="tfa-error" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ══ APP ════════════════════════════════════════════════ -->
+<div class="app" id="app" style="display:none">
+  <div class="mob-overlay" id="mob-overlay"></div>
+
+  <!-- STORIES BAR (top of sidebar) -->
+  <div class="stories-overlay" id="stories-overlay" style="display:none">
+    <div class="story-viewer" id="story-viewer">
+      <div class="sv-header">
+        <div class="sv-user-info"><div class="avatar" id="sv-avatar">?</div><div><div id="sv-name" style="font-weight:600;font-size:.9rem;"></div><div id="sv-time" style="font-size:.7rem;color:rgba(255,255,255,.6);"></div></div></div>
+        <button id="btn-close-story" class="icon-btn" style="color:#fff;font-size:1.2rem;">✕</button>
+      </div>
+      <div class="sv-progress"><div class="sv-progress-fill" id="sv-progress-fill"></div></div>
+      <div class="sv-content" id="sv-content"></div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <!-- Stories row -->
+    <div class="stories-row" id="stories-row">
+      <div class="story-add" id="btn-add-story">
+        <div class="story-add-icon">+</div>
+        <span>Your Story</span>
+      </div>
+      <div id="stories-list" style="display:flex;gap:.6rem;overflow-x:auto;padding:.1rem 0;"></div>
+    </div>
+
+    <div class="my-profile">
+      <div class="avatar-wrap" id="my-avatar-wrap">
+        <div class="avatar" id="my-avatar">?</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="my-info">
+        <div class="my-name" id="my-name">—</div>
+        <div class="my-status-txt" id="my-status-display">Available</div>
+      </div>
+      <div class="profile-actions">
+        <button class="icon-btn" id="theme-btn" title="Theme">🌙</button>
+        <button class="icon-btn" id="logout-btn" title="Sign out">⏏</button>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <button class="snav-btn active" data-panel="dms">💬 Chats</button>
+      <button class="snav-btn" data-panel="friends">👥 Friends<span class="badge" id="req-badge" style="display:none">0</span></button>
+      <button class="snav-btn" data-panel="rooms">🏠 Rooms</button>
+      <button class="snav-btn" data-panel="groups">👤 Groups</button>
+    </div>
+
+    <!-- DMs Panel -->
+    <div class="sidebar-panel active" id="panel-dms">
+      <div class="sr-wrapper">
+        <div class="sidebar-search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="dm-search" placeholder="Search users…"/>
+        </div>
+        <div class="search-results" id="dm-search-results"></div>
+      </div>
+      <div id="dm-list"><div class="skeleton-list" id="dm-skeleton"></div></div>
+    </div>
+
+    <!-- Friends Panel -->
+    <div class="sidebar-panel" id="panel-friends">
+      <div class="sidebar-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="friend-search" placeholder="Search by name or username…"/>
+      </div>
+      <div id="friend-search-results" style="overflow-y:auto;max-height:220px;"></div>
+      <div class="section-header" style="padding-top:.6rem;"><span class="list-label">Incoming Requests</span></div>
+      <div id="incoming-requests"><div class="list-empty" style="padding:1rem;">No pending requests.</div></div>
+      <div class="section-header"><span class="list-label">Your Friends</span></div>
+      <div id="friends-list"><div class="list-empty" style="padding:1rem;">No friends yet.</div></div>
+      <div class="section-header"><span class="list-label">✨ Suggested</span></div>
+      <div id="suggested-users"><div class="skeleton-list"></div></div>
+    </div>
+
+    <!-- Rooms Panel -->
+    <div class="sidebar-panel" id="panel-rooms">
+      <div class="section-header"><span class="list-label">Public Rooms</span><button class="mini-btn" id="btn-create-room">+ New</button></div>
+      <div id="rooms-inner"><div class="skeleton-list"></div></div>
+    </div>
+
+    <!-- Groups Panel -->
+    <div class="sidebar-panel" id="panel-groups">
+      <div class="section-header"><span class="list-label">Your Groups</span><button class="mini-btn" id="btn-create-group">+ New</button></div>
+      <div id="groups-inner"><div class="skeleton-list"></div></div>
+    </div>
+  </aside>
+
+  <!-- CHAT AREA -->
+  <main class="chat-area" id="chat-area">
+    <div class="chat-placeholder" id="chat-placeholder">
+      <div class="placeholder-icon">👻</div>
+      <div class="placeholder-title">Welcome to PhantomChat</div>
+      <div class="placeholder-sub">Select a chat or add friends to get started.</div>
+    </div>
+
+    <div class="active-chat" id="active-chat" style="display:none">
+      <!-- Chat Header -->
+      <div class="chat-header">
+        <button class="mob-back-btn" id="mob-back-btn">←</button>
+        <div class="chat-header-av" id="chat-hdr-av">?</div>
+        <div class="chat-header-info">
+          <div class="chat-header-name" id="chat-hdr-name">—</div>
+          <div class="chat-header-sub" id="chat-hdr-sub">—</div>
+        </div>
+        <div class="header-actions">
+          <!-- Message search toggle -->
+          <button class="icon-btn" id="btn-msg-search" title="Search messages">🔍</button>
+          <!-- Wallpaper -->
+          <button class="icon-btn" id="btn-wallpaper" title="Chat wallpaper">🎨</button>
+          <!-- Notification sound toggle -->
+          <button class="icon-btn" id="btn-sound" title="Toggle sound">🔔</button>
+          <button class="icon-btn" id="btn-info" title="Info">ℹ</button>
+        </div>
+      </div>
+
+      <!-- Message search bar -->
+      <div class="msg-search-bar" id="msg-search-bar" style="display:none">
+        <input type="text" id="msg-search-input" placeholder="Search in conversation…"/>
+        <span id="msg-search-count" style="font-size:.72rem;color:var(--text3);"></span>
+        <button id="btn-msg-search-prev" class="icon-btn" title="Previous result">◀</button>
+        <button id="btn-msg-search-next" class="icon-btn" title="Next result">▶</button>
+        <button id="btn-close-msg-search" class="icon-btn">✕</button>
+      </div>
+
+      <!-- Pinned message -->
+      <div class="pinned-bar" id="pinned-bar" style="display:none">
+        <span class="pin-icon">📌</span>
+        <div class="pin-content">
+          <div class="pin-label">Pinned Message</div>
+          <div class="pin-text" id="pin-text">—</div>
+        </div>
+        <button class="icon-btn" id="btn-unpin">✕</button>
+      </div>
+
+      <!-- E2E indicator -->
+      <div class="e2e-banner" id="e2e-banner" style="display:none">
+        🔒 Messages are end-to-end encrypted. <span style="color:var(--acc);cursor:pointer" id="e2e-learn">Learn more</span>
+      </div>
+
+      <!-- Messages area (with custom wallpaper support) -->
+      <div class="messages-area" id="messages-area">
+        <div class="messages-list" id="messages-list"></div>
+        <div class="typing-indicator" id="typing-indicator" style="display:none">
+          <div class="avatar" id="typing-av" style="width:26px;height:26px;font-size:.72rem;">?</div>
+          <div class="typing-dots"><span></span><span></span><span></span></div>
+          <span class="typing-label" id="typing-label"></span>
+        </div>
+      </div>
+
+      <!-- Reply preview -->
+      <div class="reply-preview" id="reply-preview" style="display:none">
+        <div class="rp-bar"></div>
+        <div class="rp-content"><div class="rp-name" id="rp-name"></div><div class="rp-text" id="rp-text"></div></div>
+        <button class="rp-close" id="btn-clear-reply">✕</button>
+      </div>
+
+      <!-- GIF picker -->
+      <div class="gif-picker" id="gif-picker" style="display:none">
+        <div class="gif-search-row">
+          <input type="text" id="gif-search" placeholder="Search GIFs…"/>
+          <button class="icon-btn" id="btn-close-gif">✕</button>
+        </div>
+        <div class="gif-grid" id="gif-grid"><div class="list-empty" style="padding:1rem;">Search for GIFs above</div></div>
+      </div>
+
+      <!-- Emoji picker -->
+      <div class="emoji-picker" id="emoji-picker" style="display:none"></div>
+
+      <!-- Voice recorder UI -->
+      <div class="voice-recorder" id="voice-recorder" style="display:none">
+        <div class="vr-visualizer" id="vr-visualizer">
+          <div class="vr-bars" id="vr-bars"></div>
+        </div>
+        <div class="vr-timer" id="vr-timer">0:00</div>
+        <button class="vr-cancel" id="btn-cancel-voice">✕ Cancel</button>
+        <button class="vr-send" id="btn-send-voice">Send ▶</button>
+      </div>
+
+      <!-- Wallpaper picker -->
+      <div class="wallpaper-picker" id="wallpaper-picker" style="display:none">
+        <div class="wp-title">Choose Wallpaper</div>
+        <div class="wp-grid" id="wp-grid"></div>
+        <button class="wp-custom-btn" id="btn-custom-wallpaper">📂 Upload Custom</button>
+        <input type="file" id="wallpaper-upload" accept="image/*" style="display:none"/>
+        <button class="wp-none-btn" id="btn-wallpaper-none">Remove Wallpaper</button>
+      </div>
+
+      <!-- Disappearing timer picker -->
+      <div class="disappear-bar" id="disappear-bar" style="display:none">
+        <span>⏱</span>
+        <span id="disappear-label" style="font-size:.75rem;color:var(--acc);">Messages disappear after — </span>
+        <select id="disappear-select" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:.2rem .5rem;color:var(--text);font-size:.75rem;outline:none;">
+          <option value="0">Off</option>
+          <option value="10">10 seconds</option>
+          <option value="60">1 minute</option>
+          <option value="300">5 minutes</option>
+          <option value="3600">1 hour</option>
+          <option value="86400">24 hours</option>
+        </select>
+      </div>
+
+      <!-- Input bar -->
+      <div class="input-bar">
+        <button class="input-icon-btn" id="btn-emoji">😊</button>
+        <button class="input-icon-btn" id="btn-gif" title="GIF">GIF</button>
+        <label class="input-icon-btn" for="img-upload" title="Image/File">📎</label>
+        <input type="file" id="img-upload" accept="image/*,video/*,.pdf,.doc,.docx,.txt" style="display:none"/>
+        <div class="msg-input-wrap">
+          <textarea class="msg-input" id="msg-input" placeholder="Message…" rows="1"></textarea>
+        </div>
+        <button class="input-icon-btn voice-btn" id="btn-voice" title="Voice message">🎤</button>
+        <button class="send-btn" id="send-btn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- INFO PANEL -->
+  <div class="info-panel" id="info-panel" style="display:none">
+    <div class="info-panel-hdr"><span>Info</span><button id="btn-close-info">✕</button></div>
+    <div class="info-panel-body" id="info-panel-body"></div>
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mob-bottom-nav" id="mob-bottom-nav">
+  <button class="mbn-btn active" data-panel="dms" id="mbn-dms"><span class="mbn-icon">💬</span><span>Chats</span></button>
+  <button class="mbn-btn" data-panel="friends" id="mbn-friends"><span class="mbn-icon">👥</span><span>Friends</span><span class="badge" id="mob-req-badge" style="display:none">0</span></button>
+  <button class="mbn-btn" data-panel="rooms" id="mbn-rooms"><span class="mbn-icon">🏠</span><span>Rooms</span></button>
+  <button class="mbn-btn" data-panel="groups" id="mbn-groups"><span class="mbn-icon">👤</span><span>Groups</span></button>
+</nav>
+
+<!-- ══ MODALS ══════════════════════════════════════════════ -->
+
+<!-- Profile Modal -->
+<div class="modal-backdrop" id="profile-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-head">Edit Profile <button id="btn-close-profile">✕</button></div>
+    <div class="modal-body">
+      <div class="profile-avatar-big" id="profile-avatar-big">?</div>
+      <div class="avatar-grid small" id="profile-avatar-grid"></div>
+      <div class="form-group"><label>Display Name</label><input type="text" id="profile-name-in" maxlength="30"/></div>
+      <div class="form-group"><label>Username</label><input type="text" id="profile-username-in" maxlength="20" style="text-transform:lowercase;"/><span id="username-change-hint" class="form-hint">Can change once per week</span></div>
+      <div class="form-group"><label>Bio</label><textarea id="profile-bio-in" placeholder="Tell people about yourself…" maxlength="120" rows="2" style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:.68rem .9rem;color:var(--text);font-size:.88rem;outline:none;resize:none;width:100%;"></textarea></div>
+      <div class="form-group"><label>Status</label><input type="text" id="profile-status-in" placeholder="Available" maxlength="60"/></div>
+      <label style="display:flex;align-items:center;gap:.6rem;font-size:.83rem;cursor:pointer;margin-bottom:.8rem;">
+        <input type="checkbox" id="toggle-hide-lastseen" style="width:16px;height:16px;accent-color:var(--acc);"/>
+        Hide Last Seen status
+      </label>
+      <label style="display:flex;align-items:center;gap:.6rem;font-size:.83rem;cursor:pointer;margin-bottom:.8rem;">
+        <input type="checkbox" id="toggle-notif-sound" style="width:16px;height:16px;accent-color:var(--acc);" checked/>
+        Notification sounds
+      </label>
+      <div class="form-group" style="border-top:1px solid var(--border2);padding-top:1rem;margin-top:.5rem;">
+        <label style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+          <span id="tfa-status-icon">🔓</span>
+          <span id="tfa-status-label" style="font-weight:600;">2FA is disabled 🔓</span>
+        </label>
+        <button type="button" class="auth-btn" id="btn-toggle-2fa" style="padding:.4rem 1rem;font-size:.82rem;width:auto;margin-bottom:0;box-shadow:none;">Enable</button>
+        
+        <div id="tfa-setup" style="display:none;margin-top:1rem;border:1px dashed var(--acc);padding:1rem;border-radius:10px;background:var(--bg2);">
+          <p style="font-size:.78rem;color:var(--text2);margin-bottom:.5rem;line-height:1.4;">Scan this QR code with your Authenticator app, or enter the secret key manually:</p>
+          <div id="tfa-qr" style="width:160px;height:160px;margin:.5rem auto;background:#fff;padding:5px;border-radius:5px;"></div>
+          <div style="text-align:center;margin-bottom:1rem;">
+            <span style="font-size:.7rem;color:var(--text3);">Secret Key:</span>
+            <code id="tfa-secret-code" style="display:block;font-size:.85rem;font-weight:bold;letter-spacing:1px;color:var(--acc);margin-top:.2rem;"></code>
+          </div>
+          <div class="form-group">
+            <label>Verify Code</label>
+            <input type="text" id="tfa-verify-in" placeholder="000000" maxlength="6" style="text-align:center;letter-spacing:4px;font-weight:bold;"/>
+          </div>
+          <button type="button" class="auth-btn" id="btn-confirm-2fa" style="margin-bottom:0;">Confirm & Enable 2FA</button>
+        </div>
+      </div>
+      <button class="auth-btn" id="btn-save-profile" style="margin-top:.5rem;">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Room -->
+<div class="modal-backdrop" id="create-room-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-head">Create Room <button id="btn-close-room">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Room Name</label><input type="text" id="room-name-in" placeholder="e.g. general" maxlength="30"/></div>
+      <div class="form-group"><label>Description</label><input type="text" id="room-desc-in" placeholder="What's this room about?" maxlength="80"/></div>
+      <button class="auth-btn" id="btn-confirm-room">Create Room</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Group -->
+<div class="modal-backdrop" id="create-group-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-head">Create Group <button id="btn-close-group">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Group Name</label><input type="text" id="group-name-in" placeholder="e.g. Study Buddies" maxlength="40"/></div>
+      <div class="form-group"><label>Add Members</label>
+        <input type="text" id="gm-search" placeholder="Search users…"/>
+        <div class="gm-results" id="gm-results" style="max-height:160px;overflow-y:auto;margin-top:.4rem;"></div>
+        <div class="selected-members" id="sel-members"></div>
+      </div>
+      <button class="auth-btn" id="btn-confirm-group">Create Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Story Modal -->
+<div class="modal-backdrop" id="story-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-head">Add Story <button id="btn-close-story-modal">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Text Status</label><input type="text" id="story-text-in" placeholder="What's on your mind?" maxlength="120"/></div>
+      <div class="form-group"><label>Or pick a color background</label>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;" id="story-bg-picker">
+          <div class="story-bg-opt" data-bg="linear-gradient(135deg,#667eea,#764ba2)" style="background:linear-gradient(135deg,#667eea,#764ba2)"></div>
+          <div class="story-bg-opt" data-bg="linear-gradient(135deg,#f093fb,#f5576c)" style="background:linear-gradient(135deg,#f093fb,#f5576c)"></div>
+          <div class="story-bg-opt" data-bg="linear-gradient(135deg,#4facfe,#00f2fe)" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"></div>
+          <div class="story-bg-opt" data-bg="linear-gradient(135deg,#43e97b,#38f9d7)" style="background:linear-gradient(135deg,#43e97b,#38f9d7)"></div>
+          <div class="story-bg-opt" data-bg="linear-gradient(135deg,#fa709a,#fee140)" style="background:linear-gradient(135deg,#fa709a,#fee140)"></div>
+          <div class="story-bg-opt" data-bg="linear-gradient(135deg,#a18cd1,#fbc2eb)" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)"></div>
+        </div>
+      </div>
+      <div class="form-group"><label>Or upload an image</label>
+        <label class="upload-label" for="story-img-upload">📷 Choose Image</label>
+        <input type="file" id="story-img-upload" accept="image/*" style="display:none"/>
+        <span id="story-img-name" class="form-hint"></span>
+      </div>
+      <button class="auth-btn" id="btn-post-story">Post Story</button>
+    </div>
+  </div>
+</div>
+
+<!-- Block/Report Modal -->
+<div class="modal-backdrop" id="block-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-head">Block or Report <button id="btn-close-block">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:.85rem;color:var(--text2);margin-bottom:1rem;">What would you like to do with <strong id="block-user-name">this user</strong>?</p>
+      <button class="danger-btn" id="btn-confirm-block">🚫 Block User</button>
+      <div style="height:.5rem;"></div>
+      <div class="form-group"><label>Reason for Report</label>
+        <select id="report-reason" style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:.68rem .9rem;color:var(--text);font-size:.88rem;outline:none;width:100%;">
+          <option>Spam or unwanted content</option>
+          <option>Harassment or bullying</option>
+          <option>Inappropriate content</option>
+          <option>Fake account</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <button class="warn-btn" id="btn-confirm-report">⚠ Report User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div class="ctx-menu" id="ctx-menu" style="display:none">
+  <button id="ctx-reply">↩ Reply</button>
+  <button id="ctx-copy">📋 Copy</button>
+  <button id="ctx-pin">📌 Pin</button>
+  <button id="ctx-disappear">⏱ Set Timer</button>
+  <button id="ctx-edit" style="display:none">✏ Edit</button>
+  <button id="ctx-delete" style="display:none" class="ctx-danger">🗑 Delete</button>
+</div>
+
+<!-- Reaction picker (floating) -->
+<div class="reaction-picker" id="reaction-picker" style="display:none">
+  <button class="rp-emoji" data-e="❤️">❤️</button>
+  <button class="rp-emoji" data-e="😂">😂</button>
+  <button class="rp-emoji" data-e="😮">😮</button>
+  <button class="rp-emoji" data-e="😢">😢</button>
+  <button class="rp-emoji" data-e="🔥">🔥</button>
+  <button class="rp-emoji" data-e="👍">👍</button>
+  <button class="rp-emoji more-emoji">➕</button>
+</div>
+
+<!-- Image preview modal -->
+<div class="img-preview-modal" id="img-preview-modal" style="display:none">
+  <button class="img-preview-close" id="btn-close-preview">✕</button>
+  <img id="img-preview-src" alt="preview"/>
+</div>
+
+<div class="toast" id="toast"></div>
+<audio id="notif-sound" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA..." preload="auto"></audio>
+
+<script type="module" src="script.js"></script>
+</body>
+</html>
