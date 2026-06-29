@@ -1,8 +1,8 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 // SUPABASE CONFIG 
-const SUPABASE_URL  = "https://wkvybvtvywssaqinzdzt.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrdnlidnR2eXdzc2FxaW56ZHp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTY2NDIsImV4cCI6MjA4OTU3MjY0Mn0.BMZXRxwFfh9u-gdCr46p3EhTuhytSmRQv6yg7fnGq50";
+const SUPABASE_URL  = "https://tkrwcalqyikxjrxzppos.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrcndjYWxxeWlreGpyeHpwcG9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MzAyOTAsImV4cCI6MjA5ODMwNjI5MH0.2NfQAJrVUkYgk-dBVbFzI3nIqwsnwvT5XSoH3Wk_jtc";
 // ─────────────────────────────────────────────────────────────
 
 const sb     = createClient(SUPABASE_URL, SUPABASE_ANON);

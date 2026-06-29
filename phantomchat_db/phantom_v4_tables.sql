@@ -160,7 +160,7 @@ alter table public.milestones      enable row level security;
 -- ── Phantoms ────────────────────────────────────────────
 drop policy if exists "phantoms_select" on public.phantoms;
 drop policy if exists "phantoms_insert" on public.phantoms;
-drop policy if exists "phantoms_update" on public.phants;
+drop policy if exists "phantoms_update" on public.phantoms;
 drop policy if exists "phantoms_delete" on public.phantoms;
 create policy "phantoms_select" on public.phantoms for select using (
   auth.role() = 'authenticated'
