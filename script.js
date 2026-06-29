@@ -45,6 +45,9 @@ const mk = (tag, cls='', html='') => { const e = document.createElement(tag); e.
 
 //  SPLASH → BOOT
 window.addEventListener('DOMContentLoaded', () => {
+  // Initialize theme immediately
+  setTheme(localStorage.getItem('phantom_theme')||'light');
+
   // Show splash for 1.8s then check auth
   setTimeout(async () => {
     $('splash-screen').style.opacity = '0';
@@ -62,6 +65,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }, 1900);
 
   wireUI();
+  if (window.lucide) lucide.createIcons();
 });
 
 async function boot() {
@@ -100,21 +104,25 @@ function showApp() {
   
   // Default routing to feed panel
   switchFeedOrChat('feed');
+  if (window.lucide) lucide.createIcons();
 }
 function showAuth() {
   $('auth-screen').style.display = 'flex';
   $('app').style.display = 'none';
+  if (window.lucide) lucide.createIcons();
 }
 
 //  WIRE UI
 function wireUI() {
+  // Auth Theme Toggler
+  if ($('auth-theme-btn')) $('auth-theme-btn').onclick = toggleTheme;
+
   // Auth
   $('tab-login').onclick = () => showTab('login');
   $('tab-register').onclick = () => showTab('register');
   $('btn-login-email').onclick = loginEmail;
   $('btn-register-email').onclick = registerEmail;
   $('btn-google-login').onclick = loginGoogle;
-  $('btn-google-register').onclick = loginGoogle;
   $('toggle-login-pw').onclick = () => togglePw('login-password', $('toggle-login-pw'));
   $('toggle-reg-pw').onclick   = () => togglePw('reg-password',   $('toggle-reg-pw'));
   $('login-password').addEventListener('keydown', e => { if (e.key==='Enter') loginEmail(); });
@@ -170,9 +178,9 @@ function wireUI() {
   wire2FAInputs();
 
   // App
-  $('logout-btn').onclick = logout;
-  $('theme-btn').onclick  = toggleTheme;
-  $('my-avatar-wrap').onclick = () => openModal('profile-modal');
+  if ($('logout-btn')) $('logout-btn').onclick = logout;
+  if ($('theme-btn')) $('theme-btn').onclick  = toggleTheme;
+  if ($('my-avatar-wrap')) $('my-avatar-wrap').onclick = () => openModal('profile-modal');
   if ($('btn-settings')) $('btn-settings').onclick = () => openModal('profile-modal');
 
   // Vertical Navigation Bar Links (Instagram style sidebar)
@@ -185,11 +193,20 @@ function wireUI() {
         openModal('profile-modal');
       } else if (b.id === 'nav-btn-theme') {
         toggleTheme();
-      } else if (b.id === 'nav-btn-logout') {
-        logout();
       }
     };
   });
+
+  // Pinned Bottom Profile Card Click Handlers
+  const profBlock = $('nav-profile-block');
+  if (profBlock) {
+    const av = profBlock.querySelector('.avatar');
+    const det = profBlock.querySelector('.nav-profile-details');
+    const out = profBlock.querySelector('.nav-profile-logout');
+    if (av) av.onclick = () => openModal('profile-modal');
+    if (det) det.onclick = () => openModal('profile-modal');
+    if (out) out.onclick = logout;
+  }
 
   // Mobile Bottom Navigation
   document.querySelectorAll('.mob-bottom-nav .mbn-btn').forEach(b => {
@@ -325,9 +342,13 @@ function wireUI() {
   // Sound toggle
   if ($('btn-sound')) $('btn-sound').onclick = () => {
     notifSound = !notifSound;
-    $('btn-sound').textContent = notifSound ? '🔔' : '🔕';
+    const soundIcon = $('header-sound-icon');
+    if (soundIcon) {
+      soundIcon.setAttribute('data-lucide', notifSound ? 'bell' : 'bell-off');
+    }
     localStorage.setItem('ph_notif_sound', notifSound ? '1' : '0');
-    toast(notifSound ? 'Sound on 🔔' : 'Sound off 🔕');
+    toast(notifSound ? 'Sound on' : 'Sound off');
+    if (window.lucide) lucide.createIcons();
   };
 
   // GIF picker
@@ -399,7 +420,7 @@ async function registerEmail() {
   setAuthErr(''); setAuthLoading(true);
   const { error } = await sb.auth.signUp({ email, password: pw, options: { data: { name, username, avatar: selectedAv } } });
   if (error) { setAuthErr(error.message); setAuthLoading(false); return; }
-  toast('Check your email to verify, then sign in. 📧'); showTab('login');
+  toast('Check your email to verify, then sign in.'); showTab('login');
   setAuthLoading(false);
 }
 
@@ -419,7 +440,12 @@ async function logout() {
   showAuth();
 }
 
-function togglePw(id, btn) { const i=$(id); i.type = i.type==='password'?'text':'password'; btn.textContent = i.type==='password'?'👁':'🙈'; }
+function togglePw(id, btn) {
+  const i=$(id);
+  i.type = i.type==='password'?'text':'password';
+  btn.innerHTML = i.type==='password'?'<i data-lucide="eye"></i>':'<i data-lucide="eye-off"></i>';
+  if (window.lucide) lucide.createIcons();
+}
 
 // ═══════════════════════════════════════════════════════════
 //  2FA
@@ -537,6 +563,17 @@ async function loadMyProfile() {
   $('my-name').textContent = u.name||'Me';
   $('my-status-display').textContent = u.username?'@'+u.username:(u.status||'Available');
   renderAv($('my-avatar'), u.avatar||'?');
+  
+  // Update sectioned sidebar footer details
+  if ($('nav-profile-name')) $('nav-profile-name').textContent = u.name||'Me';
+  if ($('nav-profile-username')) $('nav-profile-username').textContent = u.username?'@'+u.username:'';
+  if ($('nav-profile-av')) renderAv($('nav-profile-av'), u.avatar||'?');
+
+  // Update feed right sidebar details
+  if ($('feed-right-my-name')) $('feed-right-my-name').textContent = u.name||'Me';
+  if ($('feed-right-my-username')) $('feed-right-my-username').textContent = u.username?'@'+u.username:'';
+  if ($('feed-right-my-avatar')) renderAv($('feed-right-my-avatar'), u.avatar||'?');
+
   $('profile-name-in').value     = u.name||'';
   $('profile-status-in').value   = u.status||'';
   $('profile-username-in').value = u.username||'';
@@ -555,9 +592,10 @@ async function loadMyProfile() {
   else $('my-avatar-wrap').classList.remove('has-story');
   // Load 2FA status
   if ($('tfa-status-label')) {
-    $('tfa-status-label').textContent = u.two_fa_enabled?'2FA is enabled 🔒':'2FA is disabled 🔓';
-    $('tfa-status-icon').textContent  = u.two_fa_enabled?'🔐':'🔓';
+    $('tfa-status-label').textContent = u.two_fa_enabled?'2FA is enabled':'2FA is disabled';
+    $('tfa-status-icon').innerHTML  = u.two_fa_enabled?'<i data-lucide="lock"></i>':'<i data-lucide="unlock"></i>';
     $('btn-toggle-2fa').textContent   = u.two_fa_enabled?'Disable':'Enable';
+    if (window.lucide) lucide.createIcons();
   }
   if ($('toggle-hide-lastseen')) $('toggle-hide-lastseen').checked = !!u.last_seen_hidden;
 }
@@ -587,10 +625,8 @@ function loadSettings() {
   if ($('toggle-notif-sound')) $('toggle-notif-sound').checked = notifSound;
   disappearSeconds = parseInt(localStorage.getItem('ph_disappear')||'0');
   if ($('disappear-default')) $('disappear-default').value = String(disappearSeconds);
-  const saved = localStorage.getItem('phantom_theme')||'dark';
-  document.documentElement.setAttribute('data-theme', saved);
-  $('theme-btn').textContent = saved==='dark'?'☀️':'🌙';
-  document.querySelectorAll('.theme-opt').forEach(o => o.classList.toggle('active', o.dataset.theme===saved));
+  const saved = localStorage.getItem('phantom_theme')||'light';
+  setTheme(saved);
 }
 
 function switchSettingsTab(tab) {
@@ -626,7 +662,7 @@ async function confirm2FA() {
   if (!valid) { toast('Invalid code — try again'); return; }
   await sb.from('users').update({two_fa_enabled:true}).eq('id',me.id);
   $('tfa-setup').style.display = 'none';
-  toast('🔐 2FA enabled successfully!'); loadMyProfile();
+  toast('2FA enabled successfully!'); loadMyProfile();
 }
 
 function generateTOTPSecret() {
@@ -637,10 +673,28 @@ function generateTOTPSecret() {
 // ── Theme & Wallpaper ─────────────────────────────────────
 function toggleTheme() { setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'); }
 function setTheme(t) {
-  document.documentElement.setAttribute('data-theme',t);
-  $('theme-btn').textContent = t==='dark'?'☀️':'🌙';
-  localStorage.setItem('phantom_theme',t);
-  document.querySelectorAll('.theme-opt').forEach(o => o.classList.toggle('active',o.dataset.theme===t));
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('phantom_theme', t);
+  
+  const sidebarIcon = $('sidebar-theme-icon');
+  if (sidebarIcon) {
+    sidebarIcon.setAttribute('data-lucide', t==='dark'?'sun':'moon');
+  }
+  const navIcon = $('nav-theme-icon');
+  if (navIcon) {
+    navIcon.setAttribute('data-lucide', t==='dark'?'sun':'moon');
+  }
+
+  const authThemeBtn = $('auth-theme-btn');
+  if (authThemeBtn) {
+    const icon = $('auth-theme-icon-svg');
+    const text = authThemeBtn.querySelector('.theme-text');
+    if (icon) icon.setAttribute('data-lucide', t==='dark'?'moon':'sun');
+    if (text) text.textContent = t==='dark'?'Dark Mode':'Light Mode';
+  }
+
+  if (window.lucide) lucide.createIcons();
+  document.querySelectorAll('.theme-opt').forEach(o => o.classList.toggle('active', o.dataset.theme===t));
 }
 
 function buildWallpaperGrid() {
@@ -877,13 +931,13 @@ function buildUserRow(uid, u, frMap) {
 async function sendFriendRequest(toUid) {
   await sb.from('friends').upsert({user_id:me.id,friend_id:toUid,status:'pending'},{onConflict:'user_id,friend_id'});
   await sb.from('friends').upsert({user_id:toUid,friend_id:me.id,status:'pending'},{onConflict:'user_id,friend_id',ignoreDuplicates:true});
-  toast('Friend request sent! 🎉'); searchFriendUsers($('friend-search').value.trim()); loadSuggestedUsers();
+  toast('Friend request sent!'); searchFriendUsers($('friend-search').value.trim()); loadSuggestedUsers();
 }
 
 async function acceptFriendRequest(fromUid) {
   await sb.from('friends').update({status:'accepted'}).eq('user_id',me.id).eq('friend_id',fromUid);
   await sb.from('friends').update({status:'accepted'}).eq('user_id',fromUid).eq('friend_id',me.id);
-  toast('Friend added! 🎉'); loadFriendRequests(); loadFriendsList();
+  toast('Friend added!'); loadFriendRequests(); loadFriendsList();
 }
 
 async function declineFriendRequest(fromUid) {
@@ -951,8 +1005,8 @@ async function loadDMList() {
     const { data: msgs } = await sb.from('messages').select('text,voice_url,image_url,created_at').eq('conversation_id',conv.id).order('created_at',{ascending:false}).limit(1);
     const last = msgs?.[0];
     let preview = last?.text||'';
-    if (!preview && last?.voice_url) preview = '🎙 Voice message';
-    if (!preview && last?.image_url) preview = '🖼 Image';
+    if (!preview && last?.voice_url) preview = 'Voice message';
+    if (!preview && last?.image_url) preview = 'Image';
     const item = buildChatItem({avatar:u.avatar||'?',name:u.name||'?',preview,time:last?relTime(new Date(last.created_at).getTime()):'',unread:m.unread_count||0,online:!!u.online});
     item.addEventListener('click',()=>openDM(u,conv.id));
     if (currentChat?.convId===conv.id) item.classList.add('active');
@@ -1390,7 +1444,7 @@ async function loadPinnedMessage(convId) {
   if(!data?.length){bar.style.display='none';return;}
   const msg=data[0].messages;
   bar.style.display='flex';
-  $('pin-text').textContent=msg?.text||'🖼 Image'||(msg?.voice_url?'🎙 Voice message':'Pinned message');
+  $('pin-text').textContent=msg?.text||'Image'||(msg?.voice_url?'Voice message':'Pinned message');
   $('pinned-bar').dataset.msgId=data[0].message_id;
 }
 
@@ -1406,7 +1460,7 @@ async function doPinMsg() {
   hideCtx(); if(!contextTarget||!currentChat) return;
   await sb.from('pinned_messages').upsert({conversation_id:currentChat.convId,message_id:contextTarget.msgId,pinned_by:me.id},{onConflict:'conversation_id,message_id',ignoreDuplicates:true});
   await sb.from('messages').update({is_pinned:true}).eq('id',contextTarget.msgId);
-  loadPinnedMessage(currentChat.convId); toast('Message pinned 📌');
+  loadPinnedMessage(currentChat.convId); toast('Message pinned');
 }
 
 // ── Message Search ────────────────────────────────────────
@@ -1627,8 +1681,21 @@ function buildChatItem({avatar,name,preview,time,unread,online}){
 }
 function renderAv(el,avatar){
   if(!el)return;
-  if(typeof avatar==='string'&&(avatar.startsWith('http')||avatar.startsWith('https'))){el.innerHTML=`<img src="${avatar}" alt="av" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;el.style.background='none';}
-  else{el.textContent=avatar||'?';el.style.background=COLORS[(avatar||'?').codePointAt(0)%COLORS.length];}
+  if(typeof avatar==='string'&&(avatar.startsWith('http')||avatar.startsWith('https'))){
+    el.innerHTML=`<img src="${avatar}" alt="av" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
+    el.style.background='none';
+  } else if (avatar === '🏠') {
+    el.innerHTML = '<i data-lucide="compass"></i>';
+    el.style.background = 'var(--acc)';
+    if (window.lucide) lucide.createIcons();
+  } else if (avatar === '👥' || avatar === '👤') {
+    el.innerHTML = '<i data-lucide="users"></i>';
+    el.style.background = 'var(--acc)';
+    if (window.lucide) lucide.createIcons();
+  } else{
+    el.textContent=avatar||'?';
+    el.style.background=COLORS[(avatar||'?').codePointAt(0)%COLORS.length];
+  }
 }
 function openModal(id){$(id).style.display='flex';}
 function closeModal(id){$(id).style.display='none';}
@@ -1670,6 +1737,7 @@ async function switchFeedOrChat(panel) {
     // Load data
     loadFeedStories();
     loadFeedPosts();
+    loadFeedSuggestions();
     
     // Reset mobile state
     document.body.classList.remove('chat-open');
@@ -1699,6 +1767,8 @@ async function switchFeedOrChat(panel) {
     }
     switchPanel(panel);
   }
+  
+  if (window.lucide) lucide.createIcons();
 }
 
 async function loadFeedStories() {
@@ -1741,6 +1811,56 @@ async function loadFeedStories() {
     item.onclick = () => openStoryViewer(userStories, u);
     container.appendChild(item);
   }
+  
+  if (window.lucide) lucide.createIcons();
+}
+
+async function loadFeedSuggestions() {
+  const container = $('feed-right-suggestions-list');
+  if (!container) return;
+  
+  // Fetch up to 5 users that are not myself and not currently friends
+  const { data: users, error } = await sb.from('users')
+    .select('id, name, username, avatar')
+    .neq('id', me.id)
+    .limit(5);
+    
+  if (error || !users || users.length === 0) {
+    container.innerHTML = '<span style="font-size:0.74rem;color:var(--text3);padding-left:0.5rem;">No suggestions at this time</span>';
+    return;
+  }
+  
+  container.innerHTML = '';
+  users.forEach(u => {
+    const item = mk('div', 'feed-right-suggest-item');
+    const av = mk('div', 'avatar');
+    renderAv(av, u.avatar || '?');
+    
+    const info = mk('div', 'feed-right-suggest-info');
+    const uname = mk('div', 'feed-right-suggest-username', `@${u.username || 'user'}`);
+    const subtitle = mk('div', 'feed-right-suggest-subtitle', u.name || 'Suggested User');
+    info.append(uname, subtitle);
+    
+    const act = mk('button', 'feed-right-suggest-action', 'Follow');
+    act.onclick = async () => {
+      act.disabled = true;
+      act.textContent = 'Adding...';
+      const { error: addErr } = await sb.from('friends').insert({ user_id: me.id, friend_id: u.id, status: 'pending' });
+      if (addErr) {
+        toast('Failed to follow: ' + addErr.message);
+        act.disabled = false;
+        act.textContent = 'Follow';
+      } else {
+        toast('Friend request sent! ✉️');
+        act.textContent = 'Requested';
+        act.style.color = 'var(--text3)';
+        act.onclick = null;
+      }
+    };
+    
+    item.append(av, info, act);
+    container.appendChild(item);
+  });
 }
 
 async function loadFeedPosts() {
@@ -1759,11 +1879,12 @@ async function loadFeedPosts() {
   if (!posts || posts.length === 0) {
     container.innerHTML = `
       <div class="list-empty">
-        <span style="font-size:2.2rem;">📭</span>
+        <span style="font-size:2.2rem;"><i data-lucide="ghost"></i></span>
         <div style="font-weight:600;margin-top:0.5rem;color:var(--text2);">The Feed is Quiet</div>
         <div style="font-size:0.8rem;color:var(--text3);margin-top:0.2rem;">Be the first to share an update or community build log!</div>
       </div>
     `;
+    if (window.lucide) lucide.createIcons();
     return;
   }
   
@@ -1813,7 +1934,7 @@ async function loadFeedPosts() {
     
     // Comment button/indicator
     const commBtn = mk('div', 'post-action-btn');
-    commBtn.innerHTML = `<span>💬</span> <span>${comments.length} ${comments.length === 1 ? 'comment' : 'comments'}</span>`;
+    commBtn.innerHTML = `<span><i data-lucide="message-square"></i></span> <span>${comments.length} ${comments.length === 1 ? 'comment' : 'comments'}</span>`;
     
     actions.append(likeBtn, commBtn);
     card.appendChild(actions);
@@ -1848,6 +1969,8 @@ async function loadFeedPosts() {
     card.appendChild(commentsSec);
     container.appendChild(card);
   });
+  
+  if (window.lucide) lucide.createIcons();
 }
 
 async function toggleLikePost(postId, currentlyLiked) {

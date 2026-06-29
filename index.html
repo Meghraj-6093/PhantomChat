@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <link rel="apple-touch-icon" href="icon.svg"/>
+<link rel="icon" type="image/svg+xml" href="icon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="style.css"/>
 </head>
@@ -18,7 +19,7 @@
 <!-- ══ SPLASH SCREEN ══════════════════════════════════════ -->
 <div id="splash-screen">
   <div class="splash-logo">
-    <div class="splash-icon">👻</div>
+    <div class="splash-icon"><i data-lucide="ghost"></i></div>
     <div class="splash-name">PhantomChat</div>
     <div class="splash-bar"><div class="splash-fill"></div></div>
   </div>
@@ -27,8 +28,12 @@
 <!-- ══ AUTH ═══════════════════════════════════════════════ -->
 <div class="auth-screen" id="auth-screen" style="display:none">
   <div class="auth-bg"><div class="auth-orb o1"></div><div class="auth-orb o2"></div><div class="auth-orb o3"></div></div>
+  <button class="theme-toggle-floating" id="auth-theme-btn" title="Toggle Theme" type="button">
+    <span class="theme-icon"><i data-lucide="sun" id="auth-theme-icon-svg"></i></span>
+    <span class="theme-text">Light Mode</span>
+  </button>
   <div class="auth-card">
-    <div class="auth-logo"><div class="auth-logo-icon">👻</div><span class="auth-logo-name">PhantomChat</span></div>
+    <div class="auth-logo"><div class="auth-logo-icon"><i data-lucide="ghost"></i></div><span class="auth-logo-name">PhantomChat</span></div>
     <p class="auth-tagline">Disappear into conversation.</p>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login">Sign In</button>
@@ -39,15 +44,10 @@
     <form id="form-login" onsubmit="return false">
       <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com" autocomplete="email"/></div>
       <div class="form-group"><label>Password</label>
-        <div class="pw-wrap"><input type="password" id="login-password" placeholder="Your password" autocomplete="current-password"/><button class="pw-eye" id="toggle-login-pw" type="button">👁</button></div>
+        <div class="pw-wrap"><input type="password" id="login-password" placeholder="Your password" autocomplete="current-password"/><button class="pw-eye" id="toggle-login-pw" type="button"><i data-lucide="eye"></i></button></div>
       </div>
       <button class="auth-btn" id="btn-login-email" type="submit">Sign In →</button>
     </form>
-    <div class="auth-divider"><span>or</span></div>
-    <button class="google-btn" id="btn-google-login">
-      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      Continue with Google
-    </button>
 
     <!-- REGISTER -->
     <form id="form-register" style="display:none" onsubmit="return false">
@@ -55,25 +55,24 @@
       <div class="form-group"><label>Username</label><input type="text" id="reg-username" placeholder="@username" maxlength="20" style="text-transform:lowercase;"/><span class="form-hint">Unique · can change once/week</span></div>
       <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email"/></div>
       <div class="form-group"><label>Password</label>
-        <div class="pw-wrap"><input type="password" id="reg-password" placeholder="Min 6 characters"/><button class="pw-eye" id="toggle-reg-pw" type="button">👁</button></div>
+        <div class="pw-wrap"><input type="password" id="reg-password" placeholder="Min 6 characters"/><button class="pw-eye" id="toggle-reg-pw" type="button"><i data-lucide="eye"></i></button></div>
       </div>
       <div class="avatar-picker-section">
         <label>Upload Photo</label>
         <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
-          <div class="avatar" id="reg-avatar-preview" style="cursor:pointer;width:55px;height:55px;min-width:55px;font-size:1.4rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:2px dashed var(--border2);overflow:hidden;position:relative;">📷</div>
+          <div class="avatar" id="reg-avatar-preview" style="cursor:pointer;width:55px;height:55px;min-width:55px;font-size:1.4rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:2px dashed var(--border2);overflow:hidden;position:relative;"><i data-lucide="camera"></i></div>
           <input type="file" id="reg-avatar-upload" accept="image/*" style="display:none;"/>
           <button type="button" class="auth-btn" id="btn-reg-avatar-upload" style="margin:0;width:auto;padding:.5rem 1rem;font-size:.85rem;box-shadow:none;">Choose Photo</button>
         </div>
       </div>
       <button class="auth-btn" id="btn-register-email" type="submit">Create Account →</button>
     </form>
-    <div id="reg-divider" style="display:none">
-      <div class="auth-divider"><span>or</span></div>
-      <button class="google-btn" id="btn-google-register">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Continue with Google
-      </button>
-    </div>
+
+    <div class="auth-divider"><span>or</span></div>
+    <button class="google-btn" id="btn-google-login">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
     <div class="auth-error" id="auth-error" style="display:none"></div>
     <div class="auth-loading" id="auth-loading" style="display:none"><div class="spin"></div> Please wait…</div>
   </div>
@@ -82,7 +81,7 @@
 <!-- ══ 2FA SCREEN ══════════════════════════════════════════ -->
 <div class="tfa-screen" id="tfa-screen" style="display:none">
   <div class="tfa-card">
-    <div class="tfa-icon">🔐</div>
+    <div class="tfa-icon"><i data-lucide="lock"></i></div>
     <h2 class="tfa-title">Two-Factor Authentication</h2>
     <p class="tfa-sub">Enter the 6-digit code sent to your email</p>
     <div class="otp-inputs" id="otp-inputs">
@@ -105,46 +104,61 @@
   <!-- INSTAGRAM STYLE LEFT SIDEBAR NAVIGATION -->
   <nav class="nav-sidebar" id="nav-sidebar">
     <div class="nav-brand">
-      <span class="nav-brand-logo">👻</span>
+      <span class="nav-brand-logo"><i data-lucide="ghost"></i></span>
       <span class="nav-brand-text">PhantomChat</span>
     </div>
-    <div class="nav-links">
-      <button class="nav-item active" id="nav-btn-feed" data-panel="feed">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-label">Home</span>
-      </button>
-      <button class="nav-item" id="nav-btn-chats" data-panel="dms">
-        <span class="nav-icon">💬</span>
-        <span class="nav-label">Messages</span>
-        <span class="badge" id="nav-chats-badge" style="display:none">0</span>
-      </button>
-      <button class="nav-item" id="nav-btn-friends" data-panel="friends">
-        <span class="nav-icon">👥</span>
-        <span class="nav-label">Friends</span>
-        <span class="badge" id="nav-friends-badge" style="display:none">0</span>
-      </button>
-      <button class="nav-item" id="nav-btn-rooms" data-panel="rooms">
-        <span class="nav-icon">🧭</span>
-        <span class="nav-label">Rooms</span>
-      </button>
-      <button class="nav-item" id="nav-btn-groups" data-panel="groups">
-        <span class="nav-icon">👥</span>
-        <span class="nav-label">Groups</span>
-      </button>
-      <button class="nav-item" id="nav-btn-profile">
-        <span class="nav-icon">⚙️</span>
-        <span class="nav-label">Settings</span>
-      </button>
+    
+    <div class="nav-links-container">
+      <!-- Section 1: Workspace/Community -->
+      <div class="nav-section">
+        <div class="nav-section-title">Workspace</div>
+        <button class="nav-item active" id="nav-btn-feed" data-panel="feed">
+          <span class="nav-icon"><i data-lucide="home"></i></span>
+          <span class="nav-label">Home</span>
+        </button>
+        <button class="nav-item" id="nav-btn-chats" data-panel="dms">
+          <span class="nav-icon"><i data-lucide="message-square"></i></span>
+          <span class="nav-label">Messages</span>
+          <span class="badge" id="nav-chats-badge" style="display:none">0</span>
+        </button>
+        <button class="nav-item" id="nav-btn-friends" data-panel="friends">
+          <span class="nav-icon"><i data-lucide="users"></i></span>
+          <span class="nav-label">Friends</span>
+          <span class="badge" id="nav-friends-badge" style="display:none">0</span>
+        </button>
+        <button class="nav-item" id="nav-btn-rooms" data-panel="rooms">
+          <span class="nav-icon"><i data-lucide="compass"></i></span>
+          <span class="nav-label">Rooms</span>
+        </button>
+        <button class="nav-item" id="nav-btn-groups" data-panel="groups">
+          <span class="nav-icon"><i data-lucide="users"></i></span>
+          <span class="nav-label">Groups</span>
+        </button>
+      </div>
+
+      <!-- Section 2: Account/Configuration -->
+      <div class="nav-section">
+        <div class="nav-section-title">Account</div>
+        <button class="nav-item" id="nav-btn-profile">
+          <span class="nav-icon"><i data-lucide="settings"></i></span>
+          <span class="nav-label">Settings</span>
+        </button>
+        <button class="nav-item" id="nav-btn-theme">
+          <span class="nav-icon"><i data-lucide="moon" id="nav-theme-icon"></i></span>
+          <span class="nav-label">Theme</span>
+        </button>
+      </div>
     </div>
     
-    <div class="nav-footer">
-      <button class="nav-item" id="nav-btn-theme">
-        <span class="nav-icon">🌙</span>
-        <span class="nav-label">Theme</span>
-      </button>
-      <button class="nav-item" id="nav-btn-logout">
-        <span class="nav-icon">⏏</span>
-        <span class="nav-label">Logout</span>
+    <!-- Section 3: Bottom Pinned Profile Box -->
+    <div class="nav-profile-block" id="nav-profile-block">
+      <div class="avatar" id="nav-profile-av">?</div>
+      <div class="nav-profile-details">
+        <div class="nav-profile-name" id="nav-profile-name">—</div>
+        <div class="nav-profile-username" id="nav-profile-username">—</div>
+      </div>
+      <button class="nav-profile-logout" id="nav-btn-logout" title="Logout">
+        <i data-lucide="log-out"></i>
       </button>
     </div>
   </nav>
@@ -155,7 +169,7 @@
     <div class="story-viewer" id="story-viewer">
       <div class="sv-header">
         <div class="sv-user-info"><div class="avatar" id="sv-avatar">?</div><div><div id="sv-name" style="font-weight:600;font-size:.9rem;"></div><div id="sv-time" style="font-size:.7rem;color:rgba(255,255,255,.6);"></div></div></div>
-        <button id="btn-close-story" class="icon-btn" style="color:#fff;font-size:1.2rem;">✕</button>
+        <button id="btn-close-story" class="icon-btn" style="color:#fff;font-size:1.2rem;"><i data-lucide="x"></i></button>
       </div>
       <div class="sv-progress"><div class="sv-progress-fill" id="sv-progress-fill"></div></div>
       <div class="sv-content" id="sv-content"></div>
@@ -164,15 +178,6 @@
 
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
-    <!-- Stories row -->
-    <div class="stories-row" id="stories-row">
-      <div class="story-add" id="btn-add-story">
-        <div class="story-add-icon">+</div>
-        <span>Your Story</span>
-      </div>
-      <div id="stories-list" style="display:flex;gap:.6rem;overflow-x:auto;padding:.1rem 0;"></div>
-    </div>
-
     <div class="my-profile">
       <div class="avatar-wrap" id="my-avatar-wrap">
         <div class="avatar" id="my-avatar">?</div>
@@ -182,17 +187,6 @@
         <div class="my-name" id="my-name">—</div>
         <div class="my-status-txt" id="my-status-display">Available</div>
       </div>
-      <div class="profile-actions">
-        <button class="icon-btn" id="theme-btn" title="Theme">🌙</button>
-        <button class="icon-btn" id="logout-btn" title="Sign out">⏏</button>
-      </div>
-    </div>
-
-    <div class="sidebar-nav">
-      <button class="snav-btn active" data-panel="dms">💬 Chats</button>
-      <button class="snav-btn" data-panel="friends">👥 Friends<span class="badge" id="req-badge" style="display:none">0</span></button>
-      <button class="snav-btn" data-panel="rooms">🏠 Rooms</button>
-      <button class="snav-btn" data-panel="groups">👤 Groups</button>
     </div>
 
     <!-- DMs Panel -->
@@ -218,19 +212,19 @@
       <div id="incoming-requests"><div class="list-empty" style="padding:1rem;">No pending requests.</div></div>
       <div class="section-header"><span class="list-label">Your Friends</span></div>
       <div id="friends-list"><div class="list-empty" style="padding:1rem;">No friends yet.</div></div>
-      <div class="section-header"><span class="list-label">✨ Suggested</span></div>
+      <div class="section-header"><span class="list-label"><i data-lucide="sparkles"></i> Suggested</span></div>
       <div id="suggested-users"><div class="skeleton-list"></div></div>
     </div>
 
     <!-- Rooms Panel -->
     <div class="sidebar-panel" id="panel-rooms">
-      <div class="section-header"><span class="list-label">Public Rooms</span><button class="mini-btn" id="btn-create-room">+ New</button></div>
+      <div class="section-header"><span class="list-label">Public Rooms</span><button class="mini-btn" id="btn-create-room"><i data-lucide="plus"></i> New</button></div>
       <div id="rooms-inner"><div class="skeleton-list"></div></div>
     </div>
 
     <!-- Groups Panel -->
     <div class="sidebar-panel" id="panel-groups">
-      <div class="section-header"><span class="list-label">Your Groups</span><button class="mini-btn" id="btn-create-group">+ New</button></div>
+      <div class="section-header"><span class="list-label">Your Groups</span><button class="mini-btn" id="btn-create-group"><i data-lucide="plus"></i> New</button></div>
       <div id="groups-inner"><div class="skeleton-list"></div></div>
     </div>
   </aside>
@@ -239,39 +233,68 @@
   <main class="chat-area" id="chat-area">
     <!-- HOME FEED PANEL -->
     <div class="home-feed" id="home-feed">
-      <div class="feed-scroll-container">
-        <!-- Stories Row -->
-        <div class="feed-stories-row">
-          <div class="story-add" id="feed-btn-add-story">
-            <div class="story-add-icon">+</div>
-            <span>Your Story</span>
+      <div class="feed-main-container">
+        <div class="feed-scroll-container">
+          <!-- Stories Row -->
+          <div class="feed-stories-row">
+            <div class="story-add" id="feed-btn-add-story">
+              <div class="story-add-icon"><i data-lucide="plus"></i></div>
+              <span>Your Story</span>
+            </div>
+            <div id="feed-stories-list" style="display:flex;gap:.8rem;overflow-x:auto;align-items:center;"></div>
           </div>
-          <div id="feed-stories-list" style="display:flex;gap:.8rem;overflow-x:auto;align-items:center;"></div>
-        </div>
-        
-        <!-- Create Post Card -->
-        <div class="create-post-card">
-          <div class="create-post-header">
-            <div class="avatar" id="create-post-av">?</div>
-            <textarea id="create-post-input" placeholder="Share a community build log or update..." rows="2"></textarea>
+          
+          <!-- Create Post Card -->
+          <div class="create-post-card">
+            <div class="create-post-header">
+              <div class="avatar" id="create-post-av">?</div>
+              <textarea id="create-post-input" placeholder="Share a community build log or update..." rows="2"></textarea>
+            </div>
+            <div class="create-post-actions">
+              <label for="post-img-upload" class="post-media-btn"><i data-lucide="image"></i> Media</label>
+              <input type="file" id="post-img-upload" accept="image/*" style="display:none"/>
+              <span id="post-img-filename" class="post-filename-hint"></span>
+              <button class="post-submit-btn" id="btn-submit-post">Post</button>
+            </div>
           </div>
-          <div class="create-post-actions">
-            <label for="post-img-upload" class="post-media-btn">📷 Media</label>
-            <input type="file" id="post-img-upload" accept="image/*" style="display:none"/>
-            <span id="post-img-filename" class="post-filename-hint"></span>
-            <button class="post-submit-btn" id="btn-submit-post">Post</button>
+          
+          <!-- Posts List -->
+          <div class="feed-posts" id="feed-posts-list">
+            <div class="skeleton-list"><div class="skeleton-item"><div class="sk-av"></div><div class="sk-lines"><div class="sk-line"></div><div class="sk-line short"></div></div></div></div>
           </div>
         </div>
-        
-        <!-- Posts List -->
-        <div class="feed-posts" id="feed-posts-list">
-          <div class="skeleton-list"><div class="skeleton-item"><div class="sk-av"></div><div class="sk-lines"><div class="sk-line"></div><div class="sk-line short"></div></div></div></div>
-        </div>
+
+        <!-- Suggestions Sidebar for PC users -->
+        <aside class="feed-right-sidebar" id="feed-right-sidebar">
+          <div class="feed-right-profile" id="feed-right-profile">
+            <div class="avatar" id="feed-right-my-avatar">?</div>
+            <div class="feed-right-profile-info">
+              <div class="feed-right-profile-username" id="feed-right-my-username">—</div>
+              <div class="feed-right-profile-name" id="feed-right-my-name">—</div>
+            </div>
+            <button class="feed-right-profile-action" id="feed-right-switch-btn">Switch</button>
+          </div>
+          <div class="feed-right-suggestions-header">
+            <span>Suggested for you</span>
+            <button id="feed-right-see-all-btn">See all</button>
+          </div>
+          <div class="feed-right-suggestions-list" id="feed-right-suggestions-list">
+            <div class="skeleton-list"></div>
+          </div>
+          <footer class="feed-right-footer">
+            <div class="footer-links">
+              <a href="#" onclick="return false">About</a> • <a href="#" onclick="return false">Help</a> • <a href="#" onclick="return false">Press</a> • <a href="#" onclick="return false">API</a> • <a href="#" onclick="return false">Jobs</a> • <a href="#" onclick="return false">Privacy</a> • <a href="#" onclick="return false">Terms</a> • <a href="#" onclick="return false">Locations</a> • <a href="#" onclick="return false">Language</a> • <a href="#" onclick="return false">Meta Verified</a>
+            </div>
+            <div class="footer-copyright">
+              © 2026 PHANTOMCHAT FROM META
+            </div>
+          </footer>
+        </aside>
       </div>
     </div>
 
     <div class="chat-placeholder" id="chat-placeholder" style="display:none">
-      <div class="placeholder-icon">👻</div>
+      <div class="placeholder-icon"><i data-lucide="ghost"></i></div>
       <div class="placeholder-title">Welcome to PhantomChat</div>
       <div class="placeholder-sub">Select a chat or add friends to get started.</div>
     </div>
@@ -279,7 +302,7 @@
     <div class="active-chat" id="active-chat" style="display:none">
       <!-- Chat Header -->
       <div class="chat-header">
-        <button class="mob-back-btn" id="mob-back-btn">←</button>
+        <button class="mob-back-btn" id="mob-back-btn"><i data-lucide="arrow-left"></i></button>
         <div class="chat-header-av" id="chat-hdr-av">?</div>
         <div class="chat-header-info">
           <div class="chat-header-name" id="chat-hdr-name">—</div>
@@ -287,12 +310,12 @@
         </div>
         <div class="header-actions">
           <!-- Message search toggle -->
-          <button class="icon-btn" id="btn-msg-search" title="Search messages">🔍</button>
+          <button class="icon-btn" id="btn-msg-search" title="Search messages"><i data-lucide="search"></i></button>
           <!-- Wallpaper -->
-          <button class="icon-btn" id="btn-wallpaper" title="Chat wallpaper">🎨</button>
+          <button class="icon-btn" id="btn-wallpaper" title="Chat wallpaper"><i data-lucide="palette"></i></button>
           <!-- Notification sound toggle -->
-          <button class="icon-btn" id="btn-sound" title="Toggle sound">🔔</button>
-          <button class="icon-btn" id="btn-info" title="Info">ℹ</button>
+          <button class="icon-btn" id="btn-sound" title="Toggle sound"><i data-lucide="bell" id="header-sound-icon"></i></button>
+          <button class="icon-btn" id="btn-info" title="Info"><i data-lucide="info"></i></button>
         </div>
       </div>
 
@@ -300,24 +323,24 @@
       <div class="msg-search-bar" id="msg-search-bar" style="display:none">
         <input type="text" id="msg-search-input" placeholder="Search in conversation…"/>
         <span id="msg-search-count" style="font-size:.72rem;color:var(--text3);"></span>
-        <button id="btn-msg-search-prev" class="icon-btn" title="Previous result">◀</button>
-        <button id="btn-msg-search-next" class="icon-btn" title="Next result">▶</button>
-        <button id="btn-close-msg-search" class="icon-btn">✕</button>
+        <button id="btn-msg-search-prev" class="icon-btn" title="Previous result"><i data-lucide="chevron-left"></i></button>
+        <button id="btn-msg-search-next" class="icon-btn" title="Next result"><i data-lucide="chevron-right"></i></button>
+        <button id="btn-close-msg-search" class="icon-btn"><i data-lucide="x"></i></button>
       </div>
 
       <!-- Pinned message -->
       <div class="pinned-bar" id="pinned-bar" style="display:none">
-        <span class="pin-icon">📌</span>
+        <span class="pin-icon"><i data-lucide="pin"></i></span>
         <div class="pin-content">
           <div class="pin-label">Pinned Message</div>
           <div class="pin-text" id="pin-text">—</div>
         </div>
-        <button class="icon-btn" id="btn-unpin">✕</button>
+        <button class="icon-btn" id="btn-unpin"><i data-lucide="x"></i></button>
       </div>
 
       <!-- E2E indicator -->
       <div class="e2e-banner" id="e2e-banner" style="display:none">
-        🔒 Messages are end-to-end encrypted. <span style="color:var(--acc);cursor:pointer" id="e2e-learn">Learn more</span>
+        <i data-lucide="shield-check"></i> Messages are end-to-end encrypted. <span style="color:var(--acc);cursor:pointer" id="e2e-learn">Learn more</span>
       </div>
 
       <!-- Messages area (with custom wallpaper support) -->
@@ -334,14 +357,14 @@
       <div class="reply-preview" id="reply-preview" style="display:none">
         <div class="rp-bar"></div>
         <div class="rp-content"><div class="rp-name" id="rp-name"></div><div class="rp-text" id="rp-text"></div></div>
-        <button class="rp-close" id="btn-clear-reply">✕</button>
+        <button class="rp-close" id="btn-clear-reply"><i data-lucide="x"></i></button>
       </div>
 
       <!-- GIF picker -->
       <div class="gif-picker" id="gif-picker" style="display:none">
         <div class="gif-search-row">
           <input type="text" id="gif-search" placeholder="Search GIFs…"/>
-          <button class="icon-btn" id="btn-close-gif">✕</button>
+          <button class="icon-btn" id="btn-close-gif"><i data-lucide="x"></i></button>
         </div>
         <div class="gif-grid" id="gif-grid"><div class="list-empty" style="padding:1rem;">Search for GIFs above</div></div>
       </div>
@@ -355,22 +378,22 @@
           <div class="vr-bars" id="vr-bars"></div>
         </div>
         <div class="vr-timer" id="vr-timer">0:00</div>
-        <button class="vr-cancel" id="btn-cancel-voice">✕ Cancel</button>
-        <button class="vr-send" id="btn-send-voice">Send ▶</button>
+        <button class="vr-cancel" id="btn-cancel-voice"><i data-lucide="x"></i> Cancel</button>
+        <button class="vr-send" id="btn-send-voice">Send <i data-lucide="send"></i></button>
       </div>
 
       <!-- Wallpaper picker -->
       <div class="wallpaper-picker" id="wallpaper-picker" style="display:none">
         <div class="wp-title">Choose Wallpaper</div>
         <div class="wp-grid" id="wp-grid"></div>
-        <button class="wp-custom-btn" id="btn-custom-wallpaper">📂 Upload Custom</button>
+        <button class="wp-custom-btn" id="btn-custom-wallpaper"><i data-lucide="folder-open"></i> Upload Custom</button>
         <input type="file" id="wallpaper-upload" accept="image/*" style="display:none"/>
         <button class="wp-none-btn" id="btn-wallpaper-none">Remove Wallpaper</button>
       </div>
 
       <!-- Disappearing timer picker -->
       <div class="disappear-bar" id="disappear-bar" style="display:none">
-        <span>⏱</span>
+        <span><i data-lucide="clock"></i></span>
         <span id="disappear-label" style="font-size:.75rem;color:var(--acc);">Messages disappear after — </span>
         <select id="disappear-select" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:.2rem .5rem;color:var(--text);font-size:.75rem;outline:none;">
           <option value="0">Off</option>
@@ -384,14 +407,14 @@
 
       <!-- Input bar -->
       <div class="input-bar">
-        <button class="input-icon-btn" id="btn-emoji">😊</button>
+        <button class="input-icon-btn" id="btn-emoji"><i data-lucide="smile"></i></button>
         <button class="input-icon-btn" id="btn-gif" title="GIF">GIF</button>
-        <label class="input-icon-btn" for="img-upload" title="Image/File">📎</label>
+        <label class="input-icon-btn" for="img-upload" title="Image/File"><i data-lucide="paperclip"></i></label>
         <input type="file" id="img-upload" accept="image/*,video/*,.pdf,.doc,.docx,.txt" style="display:none"/>
         <div class="msg-input-wrap">
           <textarea class="msg-input" id="msg-input" placeholder="Message…" rows="1"></textarea>
         </div>
-        <button class="input-icon-btn voice-btn" id="btn-voice" title="Voice message">🎤</button>
+        <button class="input-icon-btn voice-btn" id="btn-voice" title="Voice message"><i data-lucide="mic"></i></button>
         <button class="send-btn" id="send-btn">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
@@ -401,17 +424,18 @@
 
   <!-- INFO PANEL -->
   <div class="info-panel" id="info-panel" style="display:none">
-    <div class="info-panel-hdr"><span>Info</span><button id="btn-close-info">✕</button></div>
+    <div class="info-panel-hdr"><span>Info</span><button id="btn-close-info"><i data-lucide="x"></i></button></div>
     <div class="info-panel-body" id="info-panel-body"></div>
   </div>
 </div>
 
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mob-bottom-nav" id="mob-bottom-nav">
-  <button class="mbn-btn active" data-panel="dms" id="mbn-dms"><span class="mbn-icon">💬</span><span>Chats</span></button>
-  <button class="mbn-btn" data-panel="friends" id="mbn-friends"><span class="mbn-icon">👥</span><span>Friends</span><span class="badge" id="mob-req-badge" style="display:none">0</span></button>
-  <button class="mbn-btn" data-panel="rooms" id="mbn-rooms"><span class="mbn-icon">🏠</span><span>Rooms</span></button>
-  <button class="mbn-btn" data-panel="groups" id="mbn-groups"><span class="mbn-icon">👤</span><span>Groups</span></button>
+  <button class="mbn-btn" data-panel="feed" id="mbn-feed"><span class="mbn-icon"><i data-lucide="home"></i></span><span>Home</span></button>
+  <button class="mbn-btn" data-panel="rooms" id="mbn-rooms"><span class="mbn-icon"><i data-lucide="compass"></i></span><span>Explore</span></button>
+  <button class="mbn-btn" id="mbn-create"><span class="mbn-icon"><i data-lucide="plus-square"></i></span><span>Create</span></button>
+  <button class="mbn-btn" data-panel="dms" id="mbn-dms"><span class="mbn-icon"><i data-lucide="message-square"></i></span><span>Chats</span><span class="badge" id="mob-chats-badge" style="display:none">0</span></button>
+  <button class="mbn-btn" id="mbn-profile"><span class="mbn-icon"><i data-lucide="user"></i></span><span>Profile</span></button>
 </nav>
 
 <!-- ══ MODALS ══════════════════════════════════════════════ -->
@@ -419,7 +443,7 @@
 <!-- Profile Modal -->
 <div class="modal-backdrop" id="profile-modal" style="display:none">
   <div class="modal">
-    <div class="modal-head">Edit Profile <button id="btn-close-profile">✕</button></div>
+    <div class="modal-head">Edit Profile <button id="btn-close-profile"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
       <div style="display:flex;flex-direction:column;align-items:center;gap:.6rem;margin-bottom:1rem;">
         <div class="profile-avatar-big" id="profile-avatar-big" style="cursor:pointer;width:80px;height:80px;font-size:2.2rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:2px solid var(--border2);overflow:hidden;position:relative;margin:0 auto;">?</div>
@@ -440,8 +464,8 @@
       </label>
       <div class="form-group" style="border-top:1px solid var(--border2);padding-top:1rem;margin-top:.5rem;">
         <label style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
-          <span id="tfa-status-icon">🔓</span>
-          <span id="tfa-status-label" style="font-weight:600;">2FA is disabled 🔓</span>
+          <span id="tfa-status-icon"><i data-lucide="unlock"></i></span>
+          <span id="tfa-status-label" style="font-weight:600;">2FA is disabled</span>
         </label>
         <button type="button" class="auth-btn" id="btn-toggle-2fa" style="padding:.4rem 1rem;font-size:.82rem;width:auto;margin-bottom:0;box-shadow:none;">Enable</button>
         
@@ -467,7 +491,7 @@
 <!-- Create Room -->
 <div class="modal-backdrop" id="create-room-modal" style="display:none">
   <div class="modal">
-    <div class="modal-head">Create Room <button id="btn-close-room">✕</button></div>
+    <div class="modal-head">Create Room <button id="btn-close-room"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
       <div class="form-group"><label>Room Name</label><input type="text" id="room-name-in" placeholder="e.g. general" maxlength="30"/></div>
       <div class="form-group"><label>Description</label><input type="text" id="room-desc-in" placeholder="What's this room about?" maxlength="80"/></div>
@@ -479,7 +503,7 @@
 <!-- Create Group -->
 <div class="modal-backdrop" id="create-group-modal" style="display:none">
   <div class="modal">
-    <div class="modal-head">Create Group <button id="btn-close-group">✕</button></div>
+    <div class="modal-head">Create Group <button id="btn-close-group"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
       <div class="form-group"><label>Group Name</label><input type="text" id="group-name-in" placeholder="e.g. Study Buddies" maxlength="40"/></div>
       <div class="form-group"><label>Add Members</label>
@@ -495,7 +519,7 @@
 <!-- Add Story Modal -->
 <div class="modal-backdrop" id="story-modal" style="display:none">
   <div class="modal">
-    <div class="modal-head">Add Story <button id="btn-close-story-modal">✕</button></div>
+    <div class="modal-head">Add Story <button id="btn-close-story-modal"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
       <div class="form-group"><label>Text Status</label><input type="text" id="story-text-in" placeholder="What's on your mind?" maxlength="120"/></div>
       <div class="form-group"><label>Or pick a color background</label>
@@ -509,7 +533,7 @@
         </div>
       </div>
       <div class="form-group"><label>Or upload an image</label>
-        <label class="upload-label" for="story-img-upload">📷 Choose Image</label>
+        <label class="upload-label" for="story-img-upload"><i data-lucide="image"></i> Choose Image</label>
         <input type="file" id="story-img-upload" accept="image/*" style="display:none"/>
         <span id="story-img-name" class="form-hint"></span>
       </div>
@@ -521,10 +545,10 @@
 <!-- Block/Report Modal -->
 <div class="modal-backdrop" id="block-modal" style="display:none">
   <div class="modal">
-    <div class="modal-head">Block or Report <button id="btn-close-block">✕</button></div>
+    <div class="modal-head">Block or Report <button id="btn-close-block"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
       <p style="font-size:.85rem;color:var(--text2);margin-bottom:1rem;">What would you like to do with <strong id="block-user-name">this user</strong>?</p>
-      <button class="danger-btn" id="btn-confirm-block">🚫 Block User</button>
+      <button class="danger-btn" id="btn-confirm-block"><i data-lucide="ban"></i> Block User</button>
       <div style="height:.5rem;"></div>
       <div class="form-group"><label>Reason for Report</label>
         <select id="report-reason" style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:.68rem .9rem;color:var(--text);font-size:.88rem;outline:none;width:100%;">
@@ -535,19 +559,19 @@
           <option>Other</option>
         </select>
       </div>
-      <button class="warn-btn" id="btn-confirm-report">⚠ Report User</button>
+      <button class="warn-btn" id="btn-confirm-report"><i data-lucide="alert-triangle"></i> Report User</button>
     </div>
   </div>
 </div>
 
 <!-- Context Menu -->
 <div class="ctx-menu" id="ctx-menu" style="display:none">
-  <button id="ctx-reply">↩ Reply</button>
-  <button id="ctx-copy">📋 Copy</button>
-  <button id="ctx-pin">📌 Pin</button>
-  <button id="ctx-disappear">⏱ Set Timer</button>
-  <button id="ctx-edit" style="display:none">✏ Edit</button>
-  <button id="ctx-delete" style="display:none" class="ctx-danger">🗑 Delete</button>
+  <button id="ctx-reply"><i data-lucide="reply"></i> Reply</button>
+  <button id="ctx-copy"><i data-lucide="copy"></i> Copy</button>
+  <button id="ctx-pin"><i data-lucide="pin"></i> Pin</button>
+  <button id="ctx-disappear"><i data-lucide="clock"></i> Set Timer</button>
+  <button id="ctx-edit" style="display:none"><i data-lucide="edit-3"></i> Edit</button>
+  <button id="ctx-delete" style="display:none" class="ctx-danger"><i data-lucide="trash-2"></i> Delete</button>
 </div>
 
 <!-- Reaction picker (floating) -->
@@ -563,13 +587,14 @@
 
 <!-- Image preview modal -->
 <div class="img-preview-modal" id="img-preview-modal" style="display:none">
-  <button class="img-preview-close" id="btn-close-preview">✕</button>
+  <button class="img-preview-close" id="btn-close-preview"><i data-lucide="x"></i></button>
   <img id="img-preview-src" alt="preview"/>
 </div>
 
 <div class="toast" id="toast"></div>
 <audio id="notif-sound" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA..." preload="auto"></audio>
 
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
 <script type="module" src="script.js"></script>
 </body>
 </html>
