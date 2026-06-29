@@ -4,6 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>PhantomChat</title>
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#0b0d14"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="apple-touch-icon" href="icon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="style.css"/>
 </head>
@@ -51,7 +57,14 @@
       <div class="form-group"><label>Password</label>
         <div class="pw-wrap"><input type="password" id="reg-password" placeholder="Min 6 characters"/><button class="pw-eye" id="toggle-reg-pw" type="button">👁</button></div>
       </div>
-      <div class="avatar-picker-section"><label>Pick an Avatar</label><div class="avatar-grid" id="avatar-grid"></div></div>
+      <div class="avatar-picker-section">
+        <label>Upload Photo</label>
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+          <div class="avatar" id="reg-avatar-preview" style="cursor:pointer;width:55px;height:55px;min-width:55px;font-size:1.4rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:2px dashed var(--border2);overflow:hidden;position:relative;">📷</div>
+          <input type="file" id="reg-avatar-upload" accept="image/*" style="display:none;"/>
+          <button type="button" class="auth-btn" id="btn-reg-avatar-upload" style="margin:0;width:auto;padding:.5rem 1rem;font-size:.85rem;box-shadow:none;">Choose Photo</button>
+        </div>
+      </div>
       <button class="auth-btn" id="btn-register-email" type="submit">Create Account →</button>
     </form>
     <div id="reg-divider" style="display:none">
@@ -86,9 +99,56 @@
   </div>
 </div>
 
-<!-- ══ APP ════════════════════════════════════════════════ -->
 <div class="app" id="app" style="display:none">
   <div class="mob-overlay" id="mob-overlay"></div>
+
+  <!-- INSTAGRAM STYLE LEFT SIDEBAR NAVIGATION -->
+  <nav class="nav-sidebar" id="nav-sidebar">
+    <div class="nav-brand">
+      <span class="nav-brand-logo">👻</span>
+      <span class="nav-brand-text">PhantomChat</span>
+    </div>
+    <div class="nav-links">
+      <button class="nav-item active" id="nav-btn-feed" data-panel="feed">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-item" id="nav-btn-chats" data-panel="dms">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">Messages</span>
+        <span class="badge" id="nav-chats-badge" style="display:none">0</span>
+      </button>
+      <button class="nav-item" id="nav-btn-friends" data-panel="friends">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Friends</span>
+        <span class="badge" id="nav-friends-badge" style="display:none">0</span>
+      </button>
+      <button class="nav-item" id="nav-btn-rooms" data-panel="rooms">
+        <span class="nav-icon">🧭</span>
+        <span class="nav-label">Rooms</span>
+      </button>
+      <button class="nav-item" id="nav-btn-groups" data-panel="groups">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Groups</span>
+      </button>
+      <button class="nav-item" id="nav-btn-profile">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </button>
+    </div>
+    
+    <div class="nav-footer">
+      <button class="nav-item" id="nav-btn-theme">
+        <span class="nav-icon">🌙</span>
+        <span class="nav-label">Theme</span>
+      </button>
+      <button class="nav-item" id="nav-btn-logout">
+        <span class="nav-icon">⏏</span>
+        <span class="nav-label">Logout</span>
+      </button>
+    </div>
+  </nav>
+
 
   <!-- STORIES BAR (top of sidebar) -->
   <div class="stories-overlay" id="stories-overlay" style="display:none">
@@ -177,7 +237,40 @@
 
   <!-- CHAT AREA -->
   <main class="chat-area" id="chat-area">
-    <div class="chat-placeholder" id="chat-placeholder">
+    <!-- HOME FEED PANEL -->
+    <div class="home-feed" id="home-feed">
+      <div class="feed-scroll-container">
+        <!-- Stories Row -->
+        <div class="feed-stories-row">
+          <div class="story-add" id="feed-btn-add-story">
+            <div class="story-add-icon">+</div>
+            <span>Your Story</span>
+          </div>
+          <div id="feed-stories-list" style="display:flex;gap:.8rem;overflow-x:auto;align-items:center;"></div>
+        </div>
+        
+        <!-- Create Post Card -->
+        <div class="create-post-card">
+          <div class="create-post-header">
+            <div class="avatar" id="create-post-av">?</div>
+            <textarea id="create-post-input" placeholder="Share a community build log or update..." rows="2"></textarea>
+          </div>
+          <div class="create-post-actions">
+            <label for="post-img-upload" class="post-media-btn">📷 Media</label>
+            <input type="file" id="post-img-upload" accept="image/*" style="display:none"/>
+            <span id="post-img-filename" class="post-filename-hint"></span>
+            <button class="post-submit-btn" id="btn-submit-post">Post</button>
+          </div>
+        </div>
+        
+        <!-- Posts List -->
+        <div class="feed-posts" id="feed-posts-list">
+          <div class="skeleton-list"><div class="skeleton-item"><div class="sk-av"></div><div class="sk-lines"><div class="sk-line"></div><div class="sk-line short"></div></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-placeholder" id="chat-placeholder" style="display:none">
       <div class="placeholder-icon">👻</div>
       <div class="placeholder-title">Welcome to PhantomChat</div>
       <div class="placeholder-sub">Select a chat or add friends to get started.</div>
@@ -328,8 +421,11 @@
   <div class="modal">
     <div class="modal-head">Edit Profile <button id="btn-close-profile">✕</button></div>
     <div class="modal-body">
-      <div class="profile-avatar-big" id="profile-avatar-big">?</div>
-      <div class="avatar-grid small" id="profile-avatar-grid"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:.6rem;margin-bottom:1rem;">
+        <div class="profile-avatar-big" id="profile-avatar-big" style="cursor:pointer;width:80px;height:80px;font-size:2.2rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);border:2px solid var(--border2);overflow:hidden;position:relative;margin:0 auto;">?</div>
+        <input type="file" id="profile-avatar-upload" accept="image/*" style="display:none;"/>
+        <button type="button" class="auth-btn" id="btn-profile-avatar-upload" style="margin:0;width:auto;padding:.4rem 1rem;font-size:.8rem;box-shadow:none;">Upload Photo</button>
+      </div>
       <div class="form-group"><label>Display Name</label><input type="text" id="profile-name-in" maxlength="30"/></div>
       <div class="form-group"><label>Username</label><input type="text" id="profile-username-in" maxlength="20" style="text-transform:lowercase;"/><span id="username-change-hint" class="form-hint">Can change once per week</span></div>
       <div class="form-group"><label>Bio</label><textarea id="profile-bio-in" placeholder="Tell people about yourself…" maxlength="120" rows="2" style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:.68rem .9rem;color:var(--text);font-size:.88rem;outline:none;resize:none;width:100%;"></textarea></div>

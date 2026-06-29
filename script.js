@@ -9,7 +9,6 @@ const sb     = createClient(SUPABASE_URL, SUPABASE_ANON);
 const BUCKET = 'phantom-media';
 
 // Constants
-const AVATARS = ['😀','😎','🥷','🧑‍💻','🦊','🐺','🐸','🦁','🐯','🤖','👾','🧙','🧛','🧜','🦸','👻','💀','🧑‍🚀','🥸','🧑‍🎤'];
 const EMOJIS  = ['😀','😃','😄','😅','😂','🤣','😊','😎','🤩','😘','🥲','😜','🤪','🤔','🤨','😏','😒','🙄','😬','😴','😵','😈','💀','👻','🤖','💩','😺','👍','👎','👏','🙌','🙏','💪','❤️','🧡','💛','💚','💙','💜','💔','🔥','🌟','✨','💫','💥','💯','⭐','🎉','🏆','👀','💬','⚡','🚀'];
 const COLORS  = ['#5b6fff','#a855f7','#ec4899','#f59e0b','#22c55e','#06b6d4'];
 const STORY_COLORS = ['#5b6fff','#a855f7','#ec4899','#f59e0b','#22c55e','#06b6d4','#ef4444','#0ea5e9','#84cc16','#f97316'];
@@ -29,7 +28,7 @@ let me = null, myData = {};
 let currentChat = null;
 let replyTarget = null, contextTarget = null, editingMsgId = null;
 let typingTimer = null, emojiOpen = false, isSending = false;
-let selectedAv = AVATARS[0], groupMemberIds = [];
+let selectedAv = '?', groupMemberIds = [];
 let chatSubs = [], rtSubs = [];
 let mediaRecorder = null, audioChunks = [], recInterval = null, recSeconds = 0;
 let isRecording = false;
@@ -79,6 +78,12 @@ function showApp() {
   const tfaEl = $('tfa-screen'); if (tfaEl) tfaEl.style.display = 'none';
   $('auth-screen').style.display = 'none';
   $('app').style.display = 'flex';
+  
+  // PWA Service Worker Registration
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.log('PWA Service Worker Registration Failed:', err));
+  }
+
   loadMyProfile();
   loadDMList();
   loadFriendRequests();
@@ -92,11 +97,13 @@ function showApp() {
   startDisappearChecker();
   loadSettings();
   setupMobile();
+  
+  // Default routing to feed panel
+  switchFeedOrChat('feed');
 }
 function showAuth() {
   $('auth-screen').style.display = 'flex';
   $('app').style.display = 'none';
-  buildAvatarGrid('avatar-grid');
 }
 
 //  WIRE UI
@@ -113,6 +120,50 @@ function wireUI() {
   $('login-password').addEventListener('keydown', e => { if (e.key==='Enter') loginEmail(); });
   $('reg-password').addEventListener('keydown',   e => { if (e.key==='Enter') registerEmail(); });
 
+  // Registration avatar photo upload
+  if ($('btn-reg-avatar-upload')) $('btn-reg-avatar-upload').onclick = () => $('reg-avatar-upload').click();
+  if ($('reg-avatar-preview')) $('reg-avatar-preview').onclick = () => $('reg-avatar-upload').click();
+  if ($('reg-avatar-upload')) {
+    $('reg-avatar-upload').onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { toast('Max image size is 5 MB'); e.target.value = ''; return; }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        selectedAv = ev.target.result; // Save base64 string
+        renderAv($('reg-avatar-preview'), selectedAv);
+      };
+      reader.readAsDataURL(file);
+    };
+  }
+
+  // Profile avatar photo upload
+  if ($('btn-profile-avatar-upload')) $('btn-profile-avatar-upload').onclick = () => $('profile-avatar-upload').click();
+  if ($('profile-avatar-big')) $('profile-avatar-big').onclick = () => $('profile-avatar-upload').click();
+  if ($('profile-avatar-upload')) {
+    $('profile-avatar-upload').onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { toast('Max image size is 5 MB'); e.target.value = ''; return; }
+      toast('Uploading photo...');
+      try {
+        const ext = file.name.split('.').pop().toLowerCase() || 'png';
+        const path = `avatars/${me.id}_${Date.now()}.${ext}`;
+        const { error: upErr } = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: true });
+        if (upErr) throw upErr;
+        const { data: { publicUrl } } = sb.storage.from(BUCKET).getPublicUrl(path);
+        selectedAv = publicUrl;
+        renderAv($('profile-avatar-big'), selectedAv);
+        await sb.from('users').update({ avatar: selectedAv }).eq('id', me.id);
+        loadMyProfile();
+        toast('Photo uploaded ✓');
+      } catch (err) {
+        console.error(err);
+        toast('Upload failed: ' + err.message);
+      }
+    };
+  }
+
   // 2FA
   if ($('btn-verify-otp')) $('btn-verify-otp').onclick = verify2FA;
   if ($('btn-resend-otp')) $('btn-resend-otp').onclick = showBackupInput;
@@ -124,14 +175,41 @@ function wireUI() {
   $('my-avatar-wrap').onclick = () => openModal('profile-modal');
   if ($('btn-settings')) $('btn-settings').onclick = () => openModal('profile-modal');
 
-  // Sidebar nav
-  document.querySelectorAll('.snav-btn').forEach(b => b.onclick = () => switchPanel(b.dataset.panel));
-  document.querySelectorAll('.mob-bottom-nav .mbn-btn').forEach(b => b.onclick = () => {
-    switchPanel(b.dataset.panel);
-    document.querySelectorAll('.mob-bottom-nav .mbn-btn').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    if (window.innerWidth <= 768) { $('sidebar').classList.add('mob-open'); $('mob-overlay').classList.add('show'); document.body.classList.add('sidebar-open'); }
+  // Vertical Navigation Bar Links (Instagram style sidebar)
+  document.querySelectorAll('.nav-sidebar .nav-item').forEach(b => {
+    b.onclick = () => {
+      const panel = b.dataset.panel;
+      if (panel) {
+        switchFeedOrChat(panel);
+      } else if (b.id === 'nav-btn-profile') {
+        openModal('profile-modal');
+      } else if (b.id === 'nav-btn-theme') {
+        toggleTheme();
+      } else if (b.id === 'nav-btn-logout') {
+        logout();
+      }
+    };
   });
+
+  // Mobile Bottom Navigation
+  document.querySelectorAll('.mob-bottom-nav .mbn-btn').forEach(b => {
+    b.onclick = () => {
+      const panel = b.dataset.panel;
+      if (panel) {
+        switchFeedOrChat(panel);
+      }
+    };
+  });
+
+  // Feed Actions
+  if ($('post-img-upload')) {
+    $('post-img-upload').addEventListener('change', e => {
+      const file = e.target.files[0];
+      $('post-img-filename').textContent = file ? file.name : '';
+    });
+  }
+  if ($('btn-submit-post')) $('btn-submit-post').onclick = submitFeedPost;
+  if ($('feed-btn-add-story')) $('feed-btn-add-story').onclick = () => openModal('story-modal');
 
   // Search
   let dsd; $('dm-search').addEventListener('input', e => { clearTimeout(dsd); dsd = setTimeout(() => searchDmUsers(e.target.value.trim()), 280); });
@@ -327,7 +405,7 @@ async function registerEmail() {
 
 async function loginGoogle() {
   setAuthErr(''); setAuthLoading(true);
-  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } });
   if (error) { setAuthErr(error.message); setAuthLoading(false); }
 }
 
@@ -416,11 +494,36 @@ function showBackupInput() { /* show backup code input */ toast('Enter your back
 //  PROFILE & SETTINGS
 // ═══════════════════════════════════════════════════════════
 async function ensureProfile() {
+  const { data: existing } = await sb.from('users').select('*').eq('id', me.id).maybeSingle();
+  if (existing) {
+    await sb.from('users').update({ online: true, last_seen: new Date().toISOString() }).eq('id', me.id);
+    return;
+  }
+
   const meta = me.user_metadata||{};
   const name = meta.name||meta.full_name||me.email?.split('@')[0]||'User';
-  const avatar = meta.avatar_url||meta.picture||selectedAv;
+  let avatar = meta.avatar_url||meta.picture||selectedAv;
   const username = meta.username||(me.email?.split('@')[0].replace(/[^a-z0-9]/g,'')+Math.floor(Math.random()*9000+1000));
-  await sb.from('users').upsert({ id:me.id, name, avatar, email:me.email||'', username, status:'Available', online:true, last_seen:new Date().toISOString() }, {onConflict:'id', ignoreDuplicates:false});
+
+  if (avatar && avatar.startsWith('data:image/')) {
+    try {
+      const mimeType = avatar.split(';')[0].split(':')[1];
+      const ext = mimeType.split('/')[1] || 'png';
+      const response = await fetch(avatar);
+      const blob = await response.blob();
+      const path = `avatars/${me.id}_${Date.now()}.${ext}`;
+      const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: mimeType, upsert: true });
+      if (!error) {
+        const { data: { publicUrl } } = sb.storage.from(BUCKET).getPublicUrl(path);
+        avatar = publicUrl;
+        await sb.auth.updateUser({ data: { avatar: publicUrl } });
+      }
+    } catch (e) {
+      console.error('Failed to upload registration profile photo to storage', e);
+    }
+  }
+
+  await sb.from('users').insert({ id:me.id, name, avatar, email:me.email||'', username, status:'Available', online:true, last_seen:new Date().toISOString() });
 }
 
 async function getMyData() {
@@ -439,7 +542,7 @@ async function loadMyProfile() {
   $('profile-username-in').value = u.username||'';
   $('profile-bio-in').value      = u.bio||'';
   renderAv($('profile-avatar-big'), u.avatar||'?');
-  selectedAv = u.avatar||AVATARS[0];
+  selectedAv = u.avatar||'?';
   const hint = $('username-change-hint');
   if (hint && u.username_changed_at) {
     const days = (Date.now()-u.username_changed_at)/(1000*60*60*24);
@@ -495,7 +598,6 @@ function switchSettingsTab(tab) {
   document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
   $(`stab-${tab}`).classList.add('active');
   if (tab==='security' && currentChat && $('disappear-bar')) $('disappear-bar').style.display='flex';
-  buildAvatarGrid('profile-avatar-grid');
 }
 
 // ── 2FA Setup ─────────────────────────────────────────────
@@ -958,7 +1060,14 @@ async function checkDisappearingMode(convId) {
 }
 
 function showChatUI(name, avatar) {
+  $('home-feed').style.display='none';
   $('chat-placeholder').style.display='none'; $('active-chat').style.display='flex';
+  
+  // Update vertical navigation to highlight Messages
+  document.querySelectorAll('.nav-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.panel === 'dms');
+  });
+  
   $('chat-hdr-name').textContent=name; renderAv($('chat-hdr-av'),avatar);
   $('messages-list').innerHTML=''; clearReply(); unsubChat(); editingMsgId=null;
   closeMsgSearch();
@@ -1505,14 +1614,7 @@ function showSkeletonBubbles(el) {
 // ═══════════════════════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════════════════════
-function buildAvatarGrid(id) {
-  const grid=$(id);if(!grid)return;grid.innerHTML='';
-  AVATARS.forEach(av=>{
-    const opt=mk('div',`av-opt${av===selectedAv?' selected':''}`);opt.textContent=av;opt.style.background=COLORS[av.codePointAt(0)%COLORS.length];
-    opt.onclick=()=>{document.querySelectorAll('.av-opt').forEach(e=>e.classList.remove('selected'));opt.classList.add('selected');selectedAv=av;const big=$('profile-avatar-big');if(big)renderAv(big,av);};
-    grid.appendChild(opt);
-  });
-}
+
 function buildChatItem({avatar,name,preview,time,unread,online}){
   const item=mk('div','chat-item');
   const aw=mk('div','avatar-wrap');const av=mk('div','avatar');renderAv(av,avatar);av.style.cssText='width:40px;height:40px;font-size:1.1rem;flex-shrink:0;';
@@ -1539,3 +1641,324 @@ function fmtSize(b){if(b<1024)return b+'B';if(b<1024*1024)return(b/1024).toFixed
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 let toastTimer;
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ═══════════════════════════════════════════════════════════
+//  INSTAGRAM FEED & NAVIGATION LOGIC
+// ═══════════════════════════════════════════════════════════
+async function switchFeedOrChat(panel) {
+  const isFeed = panel === 'feed';
+  
+  // Highlight desktop nav
+  document.querySelectorAll('.nav-sidebar .nav-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.panel === panel);
+  });
+  
+  // Highlight mobile bottom nav
+  document.querySelectorAll('.mob-bottom-nav .mbn-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.panel === panel);
+  });
+  
+  if (isFeed) {
+    $('sidebar').style.display = 'none';
+    $('chat-placeholder').style.display = 'none';
+    $('active-chat').style.display = 'none';
+    $('home-feed').style.display = 'flex';
+    
+    // Render creator profile avatar in create post card
+    renderAv($('create-post-av'), myData.avatar || '?');
+    
+    // Load data
+    loadFeedStories();
+    loadFeedPosts();
+    
+    // Reset mobile state
+    document.body.classList.remove('chat-open');
+    document.body.classList.remove('sidebar-open');
+    $('sidebar').classList.remove('mob-open');
+    $('mob-overlay').classList.remove('show');
+  } else {
+    $('home-feed').style.display = 'none';
+    $('sidebar').style.display = 'flex';
+    
+    if (window.innerWidth > 768) {
+      if (!currentChat) {
+        $('chat-placeholder').style.display = 'flex';
+        $('active-chat').style.display = 'none';
+      } else {
+        $('chat-placeholder').style.display = 'none';
+        $('active-chat').style.display = 'flex';
+      }
+    } else {
+      // Mobile overlays sidebar panel
+      $('sidebar').classList.add('mob-open');
+      $('mob-overlay').classList.add('show');
+      document.body.classList.add('sidebar-open');
+      
+      $('chat-placeholder').style.display = 'none';
+      $('active-chat').style.display = 'none';
+    }
+    switchPanel(panel);
+  }
+}
+
+async function loadFeedStories() {
+  const container = $('feed-stories-list');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const now = new Date().toISOString();
+  const { data: stories } = await sb.from('stories')
+    .select('*, users(*)')
+    .gt('expires_at', now)
+    .order('created_at', { ascending: false });
+    
+  if (!stories?.length) {
+    container.innerHTML = '<span style="font-size:0.75rem;color:var(--text3);padding-left:0.5rem;">No stories posted yet.</span>';
+    return;
+  }
+  
+  // Group stories by user
+  const byUser = {};
+  stories.forEach(s => {
+    if (!byUser[s.user_id]) byUser[s.user_id] = [];
+    byUser[s.user_id].push(s);
+  });
+  
+  for (const [uid, userStories] of Object.entries(byUser)) {
+    const u = userStories[0].users || {};
+    const { data: viewed } = await sb.from('story_views').select('story_id').eq('viewer_id', me.id);
+    const viewedIds = new Set((viewed || []).map(v => v.story_id));
+    const allViewed = userStories.every(s => viewedIds.has(s.id));
+    
+    const item = mk('div', 'story-item');
+    const ring = mk('div', `story-ring${allViewed ? ' seen' : ''}`);
+    const av = mk('div', 'story-av');
+    renderAv(av, u.avatar || '?');
+    ring.appendChild(av);
+    
+    const name = mk('div', 'story-uname', esc((u.name || '?').split(' ')[0]));
+    item.append(ring, name);
+    item.onclick = () => openStoryViewer(userStories, u);
+    container.appendChild(item);
+  }
+}
+
+async function loadFeedPosts() {
+  const container = $('feed-posts-list');
+  if (!container) return;
+  
+  const { data: posts, error } = await sb.from('build_posts')
+    .select('*, users(id, name, username, avatar), build_likes(user_id), build_comments(*, users(name, username))')
+    .order('created_at', { ascending: false });
+    
+  if (error) {
+    container.innerHTML = `<div class="list-empty">Failed to load posts. Error: ${error.message}</div>`;
+    return;
+  }
+  
+  if (!posts || posts.length === 0) {
+    container.innerHTML = `
+      <div class="list-empty">
+        <span style="font-size:2.2rem;">📭</span>
+        <div style="font-weight:600;margin-top:0.5rem;color:var(--text2);">The Feed is Quiet</div>
+        <div style="font-size:0.8rem;color:var(--text3);margin-top:0.2rem;">Be the first to share an update or community build log!</div>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = '';
+  posts.forEach(post => {
+    const u = post.users || {};
+    const likes = post.build_likes || [];
+    const isLiked = likes.some(l => l.user_id === me.id);
+    const comments = post.build_comments || [];
+    
+    const card = mk('div', 'feed-post-card');
+    
+    // Header
+    const hdr = mk('div', 'post-hdr');
+    const av = mk('div', 'avatar');
+    renderAv(av, u.avatar || '?');
+    const info = mk('div', 'post-hdr-info');
+    const name = mk('div', 'post-hdr-name', esc(u.name || 'User'));
+    const meta = mk('div', 'post-hdr-meta', `@${u.username || 'user'} · ${relTime(new Date(post.created_at).getTime())}`);
+    info.append(name, meta);
+    hdr.append(av, info);
+    card.appendChild(hdr);
+    
+    // Caption/Text
+    if (post.text_content) {
+      const cap = mk('div', 'post-caption', esc(post.text_content));
+      card.appendChild(cap);
+    }
+    
+    // Media (Image)
+    if (post.media_url) {
+      const mediaDiv = mk('div', 'post-media');
+      const img = mk('img', '');
+      img.src = post.media_url;
+      img.alt = 'post media';
+      mediaDiv.appendChild(img);
+      card.appendChild(mediaDiv);
+    }
+    
+    // Action bar
+    const actions = mk('div', 'post-actions');
+    
+    // Like button
+    const likeBtn = mk('div', `post-action-btn${isLiked ? ' liked' : ''}`);
+    likeBtn.innerHTML = `<span>${isLiked ? '❤️' : '🤍'}</span> <span>${likes.length} ${likes.length === 1 ? 'like' : 'likes'}</span>`;
+    likeBtn.onclick = () => toggleLikePost(post.id, isLiked);
+    
+    // Comment button/indicator
+    const commBtn = mk('div', 'post-action-btn');
+    commBtn.innerHTML = `<span>💬</span> <span>${comments.length} ${comments.length === 1 ? 'comment' : 'comments'}</span>`;
+    
+    actions.append(likeBtn, commBtn);
+    card.appendChild(actions);
+    
+    // Comments section
+    const commentsSec = mk('div', 'post-comments-sec');
+    
+    // List comments
+    const commentsListDiv = mk('div', 'post-comments-list');
+    comments.slice(0, 5).forEach(c => {
+      const cUser = c.users || {};
+      const item = mk('div', 'post-comment-item');
+      item.innerHTML = `<span class="comment-user">@${cUser.username || 'user'}:</span><span class="comment-text">${esc(c.text)}</span>`;
+      commentsListDiv.appendChild(item);
+    });
+    commentsSec.appendChild(commentsListDiv);
+    
+    // Comment input wrap
+    const inputWrap = mk('div', 'post-comment-input-wrap');
+    const input = mk('input', '');
+    input.placeholder = 'Add a comment...';
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitComment(post.id, input.value.trim());
+    });
+    
+    const sendBtn = mk('button', '', 'Post');
+    sendBtn.onclick = () => submitComment(post.id, input.value.trim());
+    
+    inputWrap.append(input, sendBtn);
+    commentsSec.appendChild(inputWrap);
+    
+    card.appendChild(commentsSec);
+    container.appendChild(card);
+  });
+}
+
+async function toggleLikePost(postId, currentlyLiked) {
+  if (currentlyLiked) {
+    await sb.from('build_likes').delete().eq('post_id', postId).eq('user_id', me.id);
+  } else {
+    await sb.from('build_likes').insert({ post_id: postId, user_id: me.id });
+  }
+  loadFeedPosts();
+}
+
+async function submitComment(postId, text) {
+  if (!text) return;
+  const { error } = await sb.from('build_comments').insert({ post_id: postId, user_id: me.id, text });
+  if (error) {
+    toast('Error posting comment: ' + error.message);
+  } else {
+    loadFeedPosts();
+  }
+}
+
+async function getOrCreatePostTarget() {
+  // Try to find any channel of type 'build_log'
+  const { data: chan } = await sb.from('channels').select('id, phantom_id').eq('type', 'build_log').limit(1).maybeSingle();
+  if (chan) return chan;
+  
+  // Try to find ANY channel
+  const { data: anyChan } = await sb.from('channels').select('id, phantom_id').limit(1).maybeSingle();
+  if (anyChan) return anyChan;
+  
+  // Create a default phantom and channel
+  let phantomId;
+  const { data: ph } = await sb.from('phantoms').select('id').eq('name', 'Lobby').limit(1).maybeSingle();
+  if (ph) {
+    phantomId = ph.id;
+  } else {
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 100);
+    const { data: newPh, error: phErr } = await sb.from('phantoms').insert({
+      name: 'Lobby',
+      description: 'Global community lobby',
+      expires_at: expiresAt.toISOString(),
+      created_by: me.id
+    }).select().single();
+    if (phErr) throw phErr;
+    phantomId = newPh.id;
+    
+    await sb.from('phantom_members').insert({
+      phantom_id: phantomId,
+      user_id: me.id,
+      role: 'admin'
+    });
+  }
+  
+  const { data: newChan, error: chanErr } = await sb.from('channels').insert({
+    phantom_id: phantomId,
+    name: 'general-log',
+    type: 'build_log'
+  }).select().single();
+  
+  if (chanErr) throw chanErr;
+  return newChan;
+}
+
+async function submitFeedPost() {
+  const text = $('create-post-input').value.trim();
+  const file = $('post-img-upload').files[0];
+  if (!text && !file) {
+    toast('Please enter some text or add an image.');
+    return;
+  }
+  
+  const submitBtn = $('btn-submit-post');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Posting...';
+  
+  try {
+    const target = await getOrCreatePostTarget();
+    let mediaUrl = null;
+    
+    if (file) {
+      const ext = file.name.split('.').pop();
+      const path = `${me.id}/${Date.now()}.${ext}`;
+      const { error: uploadErr } = await sb.storage.from(BUCKET).upload(path, file);
+      if (uploadErr) throw uploadErr;
+      
+      const { data: { publicUrl } } = sb.storage.from(BUCKET).getPublicUrl(path);
+      mediaUrl = publicUrl;
+    }
+    
+    const { error: insertErr } = await sb.from('build_posts').insert({
+      channel_id: target.id,
+      phantom_id: target.phantom_id,
+      user_id: me.id,
+      text_content: text,
+      media_url: mediaUrl,
+      media_type: file ? 'image' : 'text',
+      expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString()
+    });
+    
+    if (insertErr) throw insertErr;
+    
+    $('create-post-input').value = '';
+    $('post-img-upload').value = '';
+    $('post-img-filename').textContent = '';
+    toast('Post shared! 🎉');
+    loadFeedPosts();
+  } catch (err) {
+    toast('Error sharing post: ' + err.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Post';
+  }
+}
