@@ -1971,9 +1971,22 @@ function renderAv(el,avatar){
     if (window.lucide) lucide.createIcons();
   }
 }
-function openModal(id){$(id).style.display='flex';}
-function closeModal(id){$(id).style.display='none';}
-function closeAllModals(){document.querySelectorAll('.modal-backdrop').forEach(m=>m.style.display='none');}
+function openModal(id){
+  const el = $(id);
+  if (el) {
+    el.style.display = 'flex';
+    const focusable = el.querySelector('input:not([type="file"]), select, textarea, button');
+    if (focusable) focusable.focus();
+  }
+}
+function closeModal(id){
+  const el = $(id);
+  if (el) {
+    el.style.display = 'none';
+    document.activeElement?.blur();
+  }
+}
+function closeAllModals(){document.querySelectorAll('.modal-backdrop').forEach(m=>m.style.display='none');document.activeElement?.blur();}
 function scrollBottom(){const m=$('messages-area');requestAnimationFrame(()=>m.scrollTop=m.scrollHeight);}
 function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit',hour12:true});}
 function relTime(ts){const s=(Date.now()-ts)/1000;if(s<60)return'now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return new Date(ts).toLocaleDateString('en',{month:'short',day:'numeric'});}

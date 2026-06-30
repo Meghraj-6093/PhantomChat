@@ -119,37 +119,37 @@
     
     <div class="nav-links-container">
       <div class="nav-links">
-        <button class="nav-item active" id="nav-btn-feed" data-panel="feed">
+        <button class="nav-item active" id="nav-btn-feed" data-panel="feed" aria-label="Home Feed" role="tab">
           <span class="nav-icon"><i data-lucide="home"></i></span>
           <span class="nav-label">Home</span>
         </button>
-        <button class="nav-item" id="nav-btn-chats" data-panel="dms">
+        <button class="nav-item" id="nav-btn-chats" data-panel="dms" aria-label="Direct Messages" role="tab">
           <span class="nav-icon"><i data-lucide="message-square"></i></span>
           <span class="nav-label">Messages</span>
           <span class="badge" id="nav-chats-badge" style="display:none">0</span>
         </button>
-        <button class="nav-item" id="nav-btn-friends" data-panel="friends">
+        <button class="nav-item" id="nav-btn-friends" data-panel="friends" aria-label="Friends" role="tab">
           <span class="nav-icon"><i data-lucide="users"></i></span>
           <span class="nav-label">Friends</span>
           <span class="badge" id="nav-friends-badge" style="display:none">0</span>
         </button>
-        <button class="nav-item" id="nav-btn-rooms" data-panel="rooms">
+        <button class="nav-item" id="nav-btn-rooms" data-panel="rooms" aria-label="Public Rooms" role="tab">
           <span class="nav-icon"><i data-lucide="compass"></i></span>
           <span class="nav-label">Rooms</span>
         </button>
-        <button class="nav-item" id="nav-btn-groups" data-panel="groups">
+        <button class="nav-item" id="nav-btn-groups" data-panel="groups" aria-label="Group Chats" role="tab">
           <span class="nav-icon"><i data-lucide="users"></i></span>
           <span class="nav-label">Groups</span>
         </button>
-        <button class="nav-item" id="nav-btn-admin" data-panel="admin" style="display:none">
+        <button class="nav-item" id="nav-btn-admin" data-panel="admin" style="display:none" aria-label="Admin Dashboard" role="tab">
           <span class="nav-icon"><i data-lucide="shield-alert"></i></span>
           <span class="nav-label">Admin Panel</span>
         </button>
-        <button class="nav-item" id="nav-btn-profile">
+        <button class="nav-item" id="nav-btn-profile" aria-label="My Settings" role="tab">
           <span class="nav-icon"><i data-lucide="settings"></i></span>
           <span class="nav-label">Settings</span>
         </button>
-        <button class="nav-item" id="nav-btn-theme">
+        <button class="nav-item" id="nav-btn-theme" aria-label="Toggle Theme Mode" role="tab">
           <span class="nav-icon"><i data-lucide="moon" id="nav-theme-icon"></i></span>
           <span class="nav-label">Theme</span>
         </button>
@@ -163,7 +163,7 @@
         <div class="nav-profile-name" id="nav-profile-name">—</div>
         <div class="nav-profile-username" id="nav-profile-username">—</div>
       </div>
-      <button class="nav-profile-logout" id="nav-btn-logout" title="Logout">
+      <button class="nav-profile-logout" id="nav-btn-logout" title="Logout" aria-label="Logout" role="button">
         <i data-lucide="log-out"></i>
       </button>
     </div>
@@ -589,12 +589,12 @@
 </div>
 
 <!-- MOBILE BOTTOM NAV -->
-<nav class="mob-bottom-nav" id="mob-bottom-nav">
-  <button class="mbn-btn" data-panel="feed" id="mbn-feed"><span class="mbn-icon"><i data-lucide="home"></i></span><span>Home</span></button>
-  <button class="mbn-btn" data-panel="rooms" id="mbn-rooms"><span class="mbn-icon"><i data-lucide="compass"></i></span><span>Explore</span></button>
-  <button class="mbn-btn" id="mbn-create"><span class="mbn-icon"><i data-lucide="plus-square"></i></span><span>Create</span></button>
-  <button class="mbn-btn" data-panel="dms" id="mbn-dms"><span class="mbn-icon"><i data-lucide="message-square"></i></span><span>Chats</span><span class="badge" id="mob-chats-badge" style="display:none">0</span></button>
-  <button class="mbn-btn" id="mbn-profile"><span class="mbn-icon"><i data-lucide="user"></i></span><span>Profile</span></button>
+<nav class="mob-bottom-nav" id="mob-bottom-nav" role="tablist">
+  <button class="mbn-btn" data-panel="feed" id="mbn-feed" aria-label="Home Feed" role="tab"><span class="mbn-icon"><i data-lucide="home"></i></span><span>Home</span></button>
+  <button class="mbn-btn" data-panel="rooms" id="mbn-rooms" aria-label="Explore Rooms" role="tab"><span class="mbn-icon"><i data-lucide="compass"></i></span><span>Explore</span></button>
+  <button class="mbn-btn" id="mbn-create" aria-label="Create Post or Room" role="button"><span class="mbn-icon"><i data-lucide="plus-square"></i></span><span>Create</span></button>
+  <button class="mbn-btn" data-panel="dms" id="mbn-dms" aria-label="Direct Message Chats" role="tab"><span class="mbn-icon"><i data-lucide="message-square"></i></span><span>Chats</span><span class="badge" id="mob-chats-badge" style="display:none">0</span></button>
+  <button class="mbn-btn" id="mbn-profile" aria-label="My Settings" role="tab"><span class="mbn-icon"><i data-lucide="user"></i></span><span>Profile</span></button>
 </nav>
 
 <!-- ══ MODALS ══════════════════════════════════════════════ -->
