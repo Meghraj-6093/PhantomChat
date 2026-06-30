@@ -1063,7 +1063,13 @@ async function loadDMList() {
 
 async function loadRooms() {
   const el = $('rooms-inner'); showSkeleton(el, 3);
-  const { data } = await sb.from('conversations').select('*').eq('type','room').order('created_at');
+  let query = sb.from('conversations').select('*').eq('type','room');
+  if (typeof roomsSortMode !== 'undefined' && roomsSortMode === 'trending') {
+    query = query.order('views', { ascending: false });
+  } else {
+    query = query.order('created_at', { ascending: false });
+  }
+  const { data } = await query;
   allRoomsCache = data || [];
   el.innerHTML='';
   if (!data?.length) { el.innerHTML='<div class="list-empty">No rooms yet.</div>'; return; }
@@ -1151,7 +1157,13 @@ async function openConv(conv) {
   currentChat = {convId:conv.id, type:conv.type, name:conv.name, avatar:conv.icon||(conv.type==='room'?'🏠':'👥')};
   showChatUI(conv.name, conv.icon||(conv.type==='room'?'🏠':'👥'));
   $('chat-hdr-sub').textContent = conv.type==='group'?`${count} members`:(conv.description||'Public room');
-  if (conv.type==='room') await sb.from('conversation_members').upsert({conversation_id:conv.id,user_id:me.id},{onConflict:'conversation_id,user_id',ignoreDuplicates:true});
+  if (conv.type==='room') {
+    await sb.from('conversation_members').upsert({conversation_id:conv.id,user_id:me.id},{onConflict:'conversation_id,user_id',ignoreDuplicates:true});
+    const { data: rData } = await sb.from('conversations').select('views').eq('id', conv.id).single();
+    if (rData) {
+      await sb.from('conversations').update({ views: (rData.views || 0) + 1 }).eq('id', conv.id);
+    }
+  }
   loadMessages(conv.id); subscribeMessages(conv.id); loadPinnedMessage(conv.id);
 }
 
@@ -1759,18 +1771,64 @@ async function toggleInfo(){
     }
   } else {
     body.appendChild(mk('div','info-sec-title','Members'));
-    const{data:members}=await sb.from('conversation_members').select('user_id,role,users(*)').eq('conversation_id',currentChat.convId);
-    (members||[]).forEach(m=>{
-      const u=m.users;if(!u)return;
-      const item=mk('div','info-member-item');
-      const av=mk('div','avatar');renderAv(av,u.avatar||'?');av.style.cssText='width:32px;height:32px;font-size:.9rem;flex-shrink:0;';
-      const info=mk('div','');info.style.cssText='flex:1;min-width:0;';
-      info.innerHTML=`<div class="info-m-name">${esc(u.name||'?')}</div><div class="info-m-role">${m.role}</div>`;
-      item.append(av,info);body.appendChild(item);
+    const { data: myMember } = await sb.from('conversation_members')
+      .select('role')
+      .eq('conversation_id', currentChat.convId)
+      .eq('user_id', me.id)
+      .maybeSingle();
+    const myConvRole = myMember?.role || 'member';
+
+    const { data: members } = await sb.from('conversation_members').select('user_id,role,users(*)').eq('conversation_id', currentChat.convId);
+    (members || []).forEach(m => {
+      const u = m.users; if (!u) return;
+      const item = mk('div', 'info-member-item');
+      const av = mk('div', 'avatar'); renderAv(av, u.avatar || '?'); av.style.cssText = 'width:32px;height:32px;font-size:.9rem;flex-shrink:0;';
+      const info = mk('div', ''); info.style.cssText = 'flex:1;min-width:0;';
+      
+      let actionsHTML = '';
+      if (myConvRole === 'admin' && u.id !== me.id) {
+        if (m.role === 'member') {
+          actionsHTML += `<button class="admin-btn admin-btn-verify" style="padding:.2rem .4rem;font-size:.65rem;" onclick="promoteMember('${m.user_id}', '${currentChat.convId}')">Promote</button>`;
+        } else if (m.role === 'moderator') {
+          actionsHTML += `<button class="admin-btn admin-btn-unban" style="padding:.2rem .4rem;font-size:.65rem;" onclick="demoteMember('${m.user_id}', '${currentChat.convId}')">Demote</button>`;
+        }
+        actionsHTML += `<button class="admin-btn admin-btn-ban" style="padding:.2rem .4rem;font-size:.65rem;" onclick="kickMember('${m.user_id}', '${currentChat.convId}')">Kick</button>`;
+      }
+
+      info.innerHTML = `
+        <div class="info-m-name">${esc(u.name || '?')}</div>
+        <div class="info-m-role" style="font-size:.7rem;color:var(--text3);">${m.role}</div>
+        ${actionsHTML ? `<div style="display:flex;gap:.3rem;margin-top:.2rem;">${actionsHTML}</div>` : ''}
+      `;
+      item.append(av, info); body.appendChild(item);
     });
   }
   await loadStarredMessages(currentChat.convId, body);
   if(window.innerWidth<=768)$('mob-overlay').classList.add('show');
+}
+
+async function promoteMember(userId, convId) {
+  await sb.from('conversation_members').update({ role: 'moderator' }).eq('conversation_id', convId).eq('user_id', userId);
+  toast('Member promoted to moderator ✓');
+  // Re-render info panel contents
+  const panel = $('info-panel');
+  if (panel) { panel.style.display = 'none'; toggleInfo(); }
+}
+
+async function demoteMember(userId, convId) {
+  await sb.from('conversation_members').update({ role: 'member' }).eq('conversation_id', convId).eq('user_id', userId);
+  toast('Member demoted to member ✓');
+  const panel = $('info-panel');
+  if (panel) { panel.style.display = 'none'; toggleInfo(); }
+}
+
+async function kickMember(userId, convId) {
+  if (confirm('Are you sure you want to kick this member?')) {
+    await sb.from('conversation_members').delete().eq('conversation_id', convId).eq('user_id', userId);
+    toast('Member kicked from conversation');
+    const panel = $('info-panel');
+    if (panel) { panel.style.display = 'none'; toggleInfo(); }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2469,6 +2527,13 @@ async function sendThreadReply() {
   const input = $('thread-reply-input');
   const text = input.value.trim();
   if (!text || !currentThreadRootId) return;
+
+  if (text && checkProfanityFilter(text)) {
+    toast('Reply blocked: Profanity or spam detected! 🚫');
+    await sb.from('reports').insert({ reporter_id: me.id, reported_id: me.id, reason: `Automated Moderation: Profanity/Spam filter triggered in thread ("${text}")` });
+    input.value = '';
+    return;
+  }
 
   input.value = '';
   const { error } = await sb.from('messages').insert({

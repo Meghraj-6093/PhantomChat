@@ -229,6 +229,10 @@
         <input type="text" id="room-search" placeholder="Search rooms or #tags..."/>
       </div>
       <div class="section-header"><span class="list-label">Public Rooms</span><button class="mini-btn" id="btn-create-room"><i data-lucide="plus"></i> New</button></div>
+      <div style="display:flex;gap:0.3rem;padding:0.2rem 0.5rem;margin-bottom:0.4rem;">
+        <button id="btn-rooms-sort-newest" style="flex:1;font-size:0.72rem;padding:0.3rem;border-radius:6px;border:none;background:rgba(255,255,255,0.08);color:var(--text);cursor:pointer;font-weight:600;">Newest</button>
+        <button id="btn-rooms-sort-trending" style="flex:1;font-size:0.72rem;padding:0.3rem;border-radius:6px;border:none;background:none;color:var(--text3);cursor:pointer;font-weight:600;">Trending 🔥</button>
+      </div>
       <div id="rooms-inner"><div class="skeleton-list"></div></div>
     </div>
 
