@@ -398,7 +398,14 @@ function wireUI() {
 
   // Keyboard shortcut: Escape
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeStoryViewer(); closeAllModals(); closeMsgSearch(); }
+    if (e.key === 'Escape') {
+      closeStoryViewer();
+      closeAllModals();
+      closeMsgSearch();
+      hideCtx();
+      closeMentions();
+      if ($('thread-drawer')) $('thread-drawer').style.display = 'none';
+    }
   });
 }
 
@@ -615,6 +622,14 @@ async function loadMyProfile() {
     if (days<7) { const left=Math.ceil(7-days); hint.textContent=`Change again in ${left} day${left>1?'s':''}`; hint.style.color='var(--danger)'; }
     else { hint.textContent='Can change once/week'; hint.style.color='var(--text3)'; }
   }
+  if ($('premium-theme-select')) $('premium-theme-select').value = u.theme_color || 'default';
+  if ($('premium-badge-select')) $('premium-badge-select').value = u.badge || 'none';
+  if (u.role === 'owner' || u.role === 'admin' || u.role === 'premium') {
+    if ($('premium-customization-sec')) $('premium-customization-sec').style.display = 'block';
+  } else {
+    if ($('premium-customization-sec')) $('premium-customization-sec').style.display = 'none';
+  }
+  applyTheme(u.theme_color);
   // Check if my avatar has a story
   const { data: myStories } = await sb.from('stories').select('id').eq('user_id',me.id).gt('expires_at',new Date().toISOString());
   if (myStories?.length) $('my-avatar-wrap').classList.add('has-story');
@@ -634,7 +649,9 @@ async function saveProfile() {
   const status = $('profile-status-in').value.trim()||'Available';
   const bio    = $('profile-bio-in').value.trim()||'';
   let newUsername = ($('profile-username-in').value||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'');
-  const updates = { name, status, bio, avatar: selectedAv };
+  const themeColor = $('premium-theme-select') ? $('premium-theme-select').value : 'default';
+  const badge = $('premium-badge-select') ? $('premium-badge-select').value : 'none';
+  const updates = { name, status, bio, avatar: selectedAv, theme_color: themeColor, badge: badge };
   if (newUsername && newUsername !== (myData.username||'')) {
     if (newUsername.length<3) { toast('Username must be at least 3 characters'); return; }
     const lastChanged = myData.username_changed_at||0;
@@ -646,7 +663,7 @@ async function saveProfile() {
     updates.username_changed_at = Date.now();
   }
   await sb.from('users').update(updates).eq('id',me.id);
-  loadMyProfile(); closeModal('settings-modal'); toast('Profile updated ✓');
+  loadMyProfile(); closeModal('profile-modal'); toast('Profile updated ✓');
 }
 
 function loadSettings() {
@@ -1324,11 +1341,17 @@ function buildBubble(msg) {
   if (!isMe) {
     getUserMeta(msg.sender_id).then(meta => {
       const nameEl = wrap.querySelector('.msg-name');
-      if (nameEl && !nameEl.querySelector('.badge-verified')) {
+      if (nameEl && !nameEl.querySelector('.badge-verified') && !nameEl.querySelector('.custom-status-badge')) {
         if (meta.is_verified) {
           const v = mk('span', 'badge-verified');
           v.innerHTML = '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
           nameEl.appendChild(v);
+        }
+        if (meta.badge && meta.badge !== 'none') {
+          const cb = mk('span', 'custom-status-badge');
+          cb.textContent = ' ' + meta.badge;
+          cb.style.cssText = 'vertical-align:middle;font-size:0.75rem;';
+          nameEl.appendChild(cb);
         }
         if (meta.role && meta.role !== 'user') {
           const r = mk('span', `badge-role ${meta.role}`, meta.role);
@@ -1377,6 +1400,11 @@ async function sendMessage() {
     editingMsgId=null; $('msg-input').value=''; autoResize($('msg-input')); return;
   }
   const text=$('msg-input').value.trim(); if (!text&&!replyTarget) return;
+  if (text && checkProfanityFilter(text)) {
+    toast('Message blocked: Profanity or spam detected! 🚫');
+    await sb.from('reports').insert({ reporter_id: me.id, reported_id: me.id, reason: `Automated Moderation: Profanity/Spam filter triggered ("${text}")` });
+    $('msg-input').value=''; autoResize($('msg-input')); return;
+  }
   isSending=true; $('msg-input').value=''; autoResize($('msg-input'));
   try {
     const msgData = { conversation_id:currentChat.convId, sender_id:me.id, sender_name:myData.name||'Me', sender_avatar:myData.avatar||'?', text:text||null };
@@ -1615,12 +1643,92 @@ async function toggleReaction(msgId,emoji){
   else await sb.from('reactions').insert({message_id:msgId,user_id:me.id,emoji});
 }
 
-// ── Emoji Picker ──────────────────────────────────────────
+const STICKERS = [
+  { name: 'Happy Ghost', url: 'https://img.icons8.com/color/96/000000/cute-ghost.png' },
+  { name: 'Flying Ghost', url: 'https://img.icons8.com/color/96/000000/flying-ghost.png' },
+  { name: 'Shocked Ghost', url: 'https://img.icons8.com/external-flaticons-flat-flat-icons/64/000000/external-ghost-halloween-flaticons-flat-flat-icons.png' },
+  { name: 'Winking Ghost', url: 'https://img.icons8.com/external-flaticons-flat-flat-icons/64/000000/external-ghost-halloween-flaticons-flat-flat-icons-2.png' },
+  { name: 'Spooky Spirit', url: 'https://img.icons8.com/color/96/000000/ghost.png' },
+  { name: 'Devil Ghost', url: 'https://img.icons8.com/external-flat-icons-maxicons/85/000000/external-ghost-halloween-flat-icons-maxicons.png' }
+];
+
 function toggleEmoji(){
-  const ep=$('emoji-picker');emojiOpen=!emojiOpen;ep.style.display=emojiOpen?'flex':'none';
-  if(emojiOpen&&!ep.children.length){
-    EMOJIS.forEach(e=>{const b=mk('button','emoji-btn',e);b.onclick=()=>{const inp=$('msg-input');const st=inp.selectionStart||inp.value.length,en=inp.selectionEnd||inp.value.length;inp.value=inp.value.substring(0,st)+e+inp.value.substring(en);inp.selectionStart=inp.selectionEnd=st+e.length;inp.focus();autoResize(inp);ep.style.display='none';emojiOpen=false;};ep.appendChild(b);});
+  const ep = $('emoji-picker');
+  emojiOpen = !emojiOpen;
+  ep.style.display = emojiOpen ? 'flex' : 'none';
+  
+  if (emojiOpen) {
+    const tabEmo = $('ep-tab-emojis');
+    const tabStk = $('ep-tab-stickers');
+    const listEmo = $('ep-emojis-list');
+    const listStk = $('ep-stickers-list');
+    
+    tabEmo.onclick = () => {
+      tabEmo.style.background = 'rgba(255,255,255,0.1)';
+      tabEmo.style.color = 'var(--text)';
+      tabStk.style.background = 'none';
+      tabStk.style.color = 'var(--text3)';
+      listEmo.style.display = 'flex';
+      listStk.style.display = 'none';
+    };
+    
+    tabStk.onclick = () => {
+      tabStk.style.background = 'rgba(255,255,255,0.1)';
+      tabStk.style.color = 'var(--text)';
+      tabEmo.style.background = 'none';
+      tabEmo.style.color = 'var(--text3)';
+      listEmo.style.display = 'none';
+      listStk.style.display = 'flex';
+    };
+    
+    if (!listEmo.children.length) {
+      EMOJIS.forEach(e => {
+        const b = mk('button', 'emoji-btn', e);
+        b.onclick = () => {
+          const inp = $('msg-input');
+          const st = inp.selectionStart || inp.value.length, en = inp.selectionEnd || inp.value.length;
+          inp.value = inp.value.substring(0, st) + e + inp.value.substring(en);
+          inp.selectionStart = inp.selectionEnd = st + e.length;
+          inp.focus();
+          autoResize(inp);
+          ep.style.display = 'none';
+          emojiOpen = false;
+        };
+        listEmo.appendChild(b);
+      });
+    }
+    
+    if (!listStk.children.length) {
+      STICKERS.forEach(s => {
+        const b = mk('button', 'sticker-option-btn');
+        b.style.cssText = 'border:none;background:none;padding:.2rem;cursor:pointer;';
+        const img = mk('img');
+        img.src = s.url;
+        img.alt = s.name;
+        img.style.cssText = 'width:42px;height:42px;object-fit:contain;';
+        b.appendChild(img);
+        b.onclick = () => sendSticker(s.url);
+        listStk.appendChild(b);
+      });
+    }
   }
+}
+
+async function sendSticker(url) {
+  if (!currentChat) return;
+  const msgData = {
+    conversation_id: currentChat.convId,
+    sender_id: me.id,
+    sender_name: myData.name || 'Me',
+    sender_avatar: myData.avatar || '?',
+    image_url: url,
+    read_by: [me.id],
+    delivered_to: [me.id]
+  };
+  if (disappearSeconds > 0) msgData.disappears_at = new Date(Date.now() + disappearSeconds * 1000).toISOString();
+  await sb.from('messages').insert(msgData);
+  $('emoji-picker').style.display = 'none';
+  emojiOpen = false;
 }
 
 // ── Info Panel ────────────────────────────────────────────
@@ -2215,12 +2323,12 @@ const userCache = {};
 
 async function getUserMeta(userId) {
   if (userCache[userId]) return userCache[userId];
-  const { data: u } = await sb.from('users').select('role, is_verified, is_banned').eq('id', userId).single();
+  const { data: u } = await sb.from('users').select('role, is_verified, is_banned, badge, theme_color').eq('id', userId).single();
   if (u) {
     userCache[userId] = u;
     return u;
   }
-  return { role: 'user', is_verified: false, is_banned: false };
+  return { role: 'user', is_verified: false, is_banned: false, badge: 'none', theme_color: 'default' };
 }
 
 // ── STARRED MESSAGES ──
@@ -2568,6 +2676,7 @@ function setupAdminDashboard() {
     await loadAdminStats();
     await loadAdminUsers();
     await loadAdminReports();
+    await loadAdminAuditLogs();
   };
 
   if (btnAdmin) btnAdmin.onclick = showAdmin;
@@ -2646,8 +2755,10 @@ function renderAdminUsers(users) {
       const btnVerify = mk('button', 'admin-btn admin-btn-verify', 'Verify');
       btnVerify.onclick = async () => {
         await sb.from('users').update({ is_verified: true }).eq('id', u.id);
+        await writeAuditLog('Verify User', u.name);
         toast('User verified ✓');
         await loadAdminUsers();
+        await loadAdminAuditLogs();
       };
       tdActions.appendChild(btnVerify);
     }
@@ -2656,8 +2767,10 @@ function renderAdminUsers(users) {
       const btnUnban = mk('button', 'admin-btn admin-btn-unban', 'Unban');
       btnUnban.onclick = async () => {
         await sb.from('users').update({ is_banned: false }).eq('id', u.id);
+        await writeAuditLog('Unsuspend User', u.name);
         toast('User unsuspended');
         await loadAdminUsers();
+        await loadAdminAuditLogs();
       };
       tdActions.appendChild(btnUnban);
     } else {
@@ -2665,8 +2778,10 @@ function renderAdminUsers(users) {
       btnBan.onclick = async () => {
         if (u.role === 'owner') { toast('Cannot suspend owner'); return; }
         await sb.from('users').update({ is_banned: true }).eq('id', u.id);
+        await writeAuditLog('Suspend User', u.name);
         toast('User suspended');
         await loadAdminUsers();
+        await loadAdminAuditLogs();
       };
       tdActions.appendChild(btnBan);
     }
@@ -2676,8 +2791,10 @@ function renderAdminUsers(users) {
       if (u.role === 'owner') { toast('Cannot delete owner'); return; }
       if (confirm(`Are you sure you want to permanently delete user ${u.name}?`)) {
         await sb.from('users').delete().eq('id', u.id);
+        await writeAuditLog('Delete User', u.name);
         toast('User deleted');
         await loadAdminUsers();
+        await loadAdminAuditLogs();
       }
     };
     tdActions.appendChild(btnDel);
@@ -2725,8 +2842,10 @@ async function loadAdminReports() {
     const btnDismiss = mk('button', 'admin-btn admin-btn-verify', 'Dismiss');
     btnDismiss.onclick = async () => {
       await sb.from('reports').delete().eq('id', r.id);
+      await writeAuditLog('Dismiss Report', r.reported?.name || 'User');
       toast('Report dismissed');
       await loadAdminReports();
+      await loadAdminAuditLogs();
     };
     tdAct.appendChild(btnDismiss);
     
@@ -2735,8 +2854,10 @@ async function loadAdminReports() {
       btnBan.onclick = async () => {
         await sb.from('users').update({ is_banned: true }).eq('id', r.reported_id);
         await sb.from('reports').delete().eq('id', r.id);
+        await writeAuditLog('Suspend User (Reported)', r.reported?.name || 'User');
         toast('Offender suspended and report resolved');
         await loadAdminReports();
+        await loadAdminAuditLogs();
       };
       tdAct.appendChild(btnBan);
     }
@@ -2760,8 +2881,13 @@ async function broadcastAnnouncement() {
     text: text
   });
 
-  if (error) toast('Announcement failed: ' + error.message);
-  else toast('Announcement broadcasted! 📢');
+  if (error) {
+    toast('Announcement failed: ' + error.message);
+  } else {
+    await writeAuditLog('Broadcast Announcement', text);
+    toast('Announcement broadcasted! 📢');
+    await loadAdminAuditLogs();
+  }
 }
 
 // ── DISCOVERABILITY ROOM SEARCH & HASHTAGS ──
@@ -2804,4 +2930,64 @@ function filterRoomsList(q) {
     if (currentChat?.convId===r.id) item.classList.add('active');
     list.appendChild(item);
   });
+}
+
+// ── CUSTOM ACCENT THEMES APP LIER ──
+function applyTheme(themeColor) {
+  document.body.className = document.body.className.replace(/\btheme-\S+/g, '');
+  if (themeColor && themeColor !== 'default') {
+    document.body.classList.add('theme-' + themeColor);
+  }
+}
+
+// ── SYSTEM AUDIT LOGGING WRITER ──
+async function writeAuditLog(action, targetName) {
+  try {
+    await sb.from('audit_logs').insert({
+      actor_id: me.id,
+      actor_name: myData.name || 'Admin',
+      action: action,
+      target_name: targetName
+    });
+  } catch (err) {
+    console.error('Audit logging failed', err);
+  }
+}
+
+async function loadAdminAuditLogs() {
+  const { data } = await sb.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(20);
+  const list = $('admin-audit-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!data?.length) {
+    list.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);">No audit logs yet.</td></tr>';
+    return;
+  }
+  data.forEach(log => {
+    const tr = mk('tr');
+    tr.innerHTML = `
+      <td><b>${esc(log.actor_name || 'System')}</b></td>
+      <td><span class="badge-role" style="background:var(--acc-dim);color:var(--acc);padding:0.2rem 0.5rem;border-radius:6px;font-size:0.75rem;font-weight:600;">${esc(log.action)}</span></td>
+      <td>${esc(log.target_name || 'N/A')}</td>
+      <td><span style="font-size:.75rem;color:var(--text3);">${fmtTime(log.created_at)}</span></td>
+    `;
+    list.appendChild(tr);
+  });
+}
+
+// ── PROFANITY & SPAM FILTER MODERATION ──
+function checkProfanityFilter(text) {
+  const filterEnabled = $('toggle-profanity-filter') ? $('toggle-profanity-filter').checked : true;
+  if (!filterEnabled) return false;
+
+  const rawList = $('admin-profanity-words') ? $('admin-profanity-words').value : 'spam, scam, hack, exploit, freebie';
+  const badWords = rawList.split(',').map(w => w.trim().toLowerCase()).filter(Boolean);
+
+  const cleanText = text.toLowerCase();
+  for (const word of badWords) {
+    if (cleanText.includes(word)) {
+      return true;
+    }
+  }
+  return false;
 }

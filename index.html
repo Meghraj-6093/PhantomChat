@@ -318,6 +318,38 @@
               <!-- Dynamically populated -->
             </tbody>
           </table>
+      </div>
+
+      <!-- Moderation Settings -->
+      <div class="admin-content-section" style="margin-top:1rem;">
+        <h3 style="font-family:'Outfit',sans-serif;font-weight:700;font-size:1.1rem;margin:0 0 .5rem 0;">Moderation Settings</h3>
+        <label style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;cursor:pointer;margin-bottom:.8rem;color:var(--text);">
+          <input type="checkbox" id="toggle-profanity-filter" style="width:16px;height:16px;accent-color:var(--acc);" checked/>
+          Enable Automated Profanity & Spam Filter
+        </label>
+        <div class="form-group">
+          <label>Custom Filtered Word List (comma separated)</label>
+          <input type="text" id="admin-profanity-words" value="spam, scam, hack, exploit, freebie" style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:.68rem .9rem;color:var(--text);font-size:.88rem;outline:none;width:100%;"/>
+        </div>
+      </div>
+
+      <!-- Audit Logs -->
+      <div class="admin-content-section" style="margin-top:1rem;">
+        <h3 style="font-family:'Outfit',sans-serif;font-weight:700;font-size:1.1rem;margin:0 0 .5rem 0;">System Audit Logs</h3>
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Target</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="admin-audit-list">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -460,8 +492,15 @@
         <div class="gif-grid" id="gif-grid"><div class="list-empty" style="padding:1rem;">Search for GIFs above</div></div>
       </div>
 
-      <!-- Emoji picker -->
-      <div class="emoji-picker" id="emoji-picker" style="display:none"></div>
+      <!-- Emoji & Sticker picker -->
+      <div class="emoji-picker" id="emoji-picker" style="display:none;flex-direction:column;">
+        <div style="display:flex;border-bottom:1px solid var(--border2);background:rgba(255,255,255,0.05);padding:0.2rem;gap:0.2rem;">
+          <button id="ep-tab-emojis" style="flex:1;font-size:0.75rem;padding:0.4rem;border-radius:6px;border:none;background:rgba(255,255,255,0.1);color:var(--text);cursor:pointer;font-weight:600;">Emojis</button>
+          <button id="ep-tab-stickers" style="flex:1;font-size:0.75rem;padding:0.4rem;border-radius:6px;border:none;background:none;color:var(--text3);cursor:pointer;font-weight:600;">Stickers</button>
+        </div>
+        <div id="ep-emojis-list" style="display:flex;flex-wrap:wrap;overflow-y:auto;max-height:180px;padding:0.4rem;gap:0.2rem;"></div>
+        <div id="ep-stickers-list" style="display:none;flex-wrap:wrap;overflow-y:auto;max-height:180px;padding:0.4rem;gap:0.5rem;justify-content:center;"></div>
+      </div>
 
       <!-- Voice recorder UI -->
       <div class="voice-recorder" id="voice-recorder" style="display:none">
@@ -597,6 +636,33 @@
             <input type="text" id="tfa-verify-in" placeholder="000000" maxlength="6" style="text-align:center;letter-spacing:4px;font-weight:bold;"/>
           </div>
           <button type="button" class="auth-btn" id="btn-confirm-2fa" style="margin-bottom:0;">Confirm & Enable 2FA</button>
+        </div>
+      </div>
+      <!-- PREMIUM CUSTOMIZATIONS -->
+      <div class="premium-customization-sec" id="premium-customization-sec" style="border-top:1px solid var(--border2);padding-top:1rem;margin-top:.8rem;display:none;">
+        <div style="display:flex;align-items:center;gap:.3rem;margin-bottom:.5rem;color:#f59e0b;font-weight:700;font-size:.85rem;">
+          <i data-lucide="crown" style="width:16px;height:16px;"></i> Premium Customization
+        </div>
+        <div class="form-group">
+          <label>Profile Accent Color Theme</label>
+          <select id="premium-theme-select" style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:.5rem;color:var(--text);font-size:.82rem;width:100%;outline:none;">
+            <option value="default">Default Phantom Blue</option>
+            <option value="emerald">Emerald Green</option>
+            <option value="rose">Rose Quartz Pink</option>
+            <option value="amber">Amber Glow Gold</option>
+            <option value="purple">Mystic Violet Purple</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Custom Status Badge</label>
+          <select id="premium-badge-select" style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:.5rem;color:var(--text);font-size:.82rem;width:100%;outline:none;">
+            <option value="none">None</option>
+            <option value="⚡">⚡ Lightning Bolt</option>
+            <option value="💎">💎 Diamond Glow</option>
+            <option value="🔥">🔥 Fire Starter</option>
+            <option value="👾">👾 Retro Gamer</option>
+            <option value="🍀">🍀 Lucky Clover</option>
+          </select>
         </div>
       </div>
       <button class="auth-btn" id="btn-admin-dashboard" style="display:none;background:var(--danger);margin-top:.5rem;box-shadow:none;">Open Admin Dashboard</button>

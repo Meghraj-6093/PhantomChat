@@ -69,6 +69,35 @@ create policy "messages_delete" on public.messages for delete using (
   )
 );
 
+-- ── 5. PREMIUM PROFILE CUSTOMIZATION ─────────────────────────
+alter table public.users add column if not exists theme_color text default 'default';
+
+-- ── 6. AUDIT LOGS TABLE ──────────────────────────────────────
+create table if not exists public.audit_logs (
+  id uuid primary key default uuid_generate_v4(),
+  actor_id uuid references public.users(id) on delete set null,
+  actor_name text,
+  action text not null,
+  target_name text,
+  created_at timestamptz default now()
+);
+
+alter table public.audit_logs enable row level security;
+
+drop policy if exists "audit_select" on public.audit_logs;
+create policy "audit_select" on public.audit_logs for select using (
+  exists (
+    select 1 from public.users u 
+    where u.id = auth.uid() 
+    and u.role in ('owner', 'admin', 'moderator')
+  )
+);
+
+drop policy if exists "audit_insert" on public.audit_logs;
+create policy "audit_insert" on public.audit_logs for insert with check (auth.role() = 'authenticated');
+
 -- Ensure all tables are exposed to real-time replication
 alter table public.reports replica identity full;
+alter table public.audit_logs replica identity full;
 do $$ begin alter publication supabase_realtime add table public.reports; exception when others then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.audit_logs; exception when others then null; end $$;

@@ -1599,5 +1599,62 @@ body {
   color: var(--acc);
 }
 
+/* ── THEME PALETTES ── */
+body.theme-emerald {
+  --acc: #10b981;
+  --acc2: #059669;
+  --acc-dim: rgba(16, 185, 129, 0.15);
+  --acc-hover: #34d399;
+}
+body.theme-rose {
+  --acc: #ec4899;
+  --acc2: #db2777;
+  --acc-dim: rgba(236, 72, 153, 0.15);
+  --acc-hover: #f472b6;
+}
+body.theme-amber {
+  --acc: #f59e0b;
+  --acc2: #d97706;
+  --acc-dim: rgba(245, 158, 11, 0.15);
+  --acc-hover: #fbbf24;
+}
+body.theme-purple {
+  --acc: #8b5cf6;
+  --acc2: #7c3aed;
+  --acc-dim: rgba(139, 92, 246, 0.15);
+  --acc-hover: #a78bfa;
+}
+
+/* Sticker Display inside Chat Bubble */
+.bubble-sticker {
+  max-width: 120px;
+  max-height: 120px;
+  display: block;
+  margin: 0.3rem 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+.bubble-sticker:hover {
+  transform: scale(1.08);
+}
+
+.sticker-option-btn {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 0.3rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sticker-option-btn:hover {
+  background: var(--glass-bg-hover);
+  transform: scale(1.05);
+}
+
 
 
