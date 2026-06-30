@@ -223,7 +223,7 @@ img{display:block;}
 .story-bg-opt:hover,.story-bg-opt.selected{border-color:var(--acc);transform:scale(1.1);}
 
 /* ── SIDEBAR ───────────────────────────────────────────────*/
-.sidebar{width:300px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);
+.sidebar{width:260px;flex-shrink:0;background:var(--sidebar-bg);border-right:1px solid var(--border);
   display:flex;flex-direction:column;height:100vh;height:100dvh;
   transition:background .3s,transform .3s cubic-bezier(.4,0,.2,1);position:relative;z-index:40;}
 .my-profile{display:flex;align-items:center;gap:.7rem;padding:.9rem 1rem;border-bottom:1px solid var(--border);}
@@ -515,8 +515,8 @@ img{display:block;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* Mobile bottom nav */
-.mob-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--sidebar-bg);border-top:1px solid var(--border);height:calc(54px + env(safe-area-inset-bottom,0px));box-sizing:border-box;}
-.mob-bottom-nav .mbn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.18rem;padding:.55rem .2rem .45rem;color:var(--text3);font-size:.55rem;font-weight:600;border-bottom:2px solid transparent;transition:all .18s;cursor:pointer;position:relative;}
+.mob-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--sidebar-bg);border-top:1px solid var(--border);height:calc(56px + env(safe-area-inset-bottom,0px));box-sizing:border-box;}
+.mob-bottom-nav .mbn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.18rem;padding:.4rem .2rem calc(.4rem + env(safe-area-inset-bottom,0px));color:var(--text3);font-size:.55rem;font-weight:600;border-bottom:2px solid transparent;transition:all .18s;cursor:pointer;position:relative;}
 .mob-bottom-nav .mbn-btn .mbn-icon{font-size:1.3rem;line-height:1;}
 .mob-bottom-nav .mbn-btn.active{color:var(--acc);border-bottom-color:var(--acc);}
 .mob-bottom-nav .mbn-btn .badge{position:absolute;top:.3rem;right:calc(50% - 14px);background:var(--danger);color:#fff;border-radius:99px;font-size:.5rem;font-weight:700;min-width:14px;height:14px;padding:0 3px;display:inline-flex;align-items:center;justify-content:center;}
@@ -1655,6 +1655,7 @@ body.theme-purple {
   background: var(--glass-bg-hover);
   transform: scale(1.05);
 }
-
-
-
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [role="button"]:focus-visible, [role="tab"]:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}

@@ -1017,7 +1017,7 @@ async function loadFriendsList() {
   const el = $('friends-list'); showSkeleton(el, 3);
   const { data } = await sb.from('friends').select('friend_id').eq('user_id',me.id).eq('status','accepted');
   el.innerHTML='';
-  if (!data?.length) { el.innerHTML='<div class="list-empty" style="padding:1rem;">No friends yet.</div>'; return; }
+  if (!data?.length) { el.innerHTML='<div class="list-empty" style="padding:1rem;">No friends yet.<br><button class="mini-btn" style="margin-top:.4rem;font-size:.7rem;padding:.2rem .4rem;" onclick="switchPanel(\'friends\')">Find Friends</button></div>'; return; }
   for (const r of data) {
     const { data: u } = await sb.from('users').select('*').eq('id',r.friend_id).single(); if (!u) continue;
     const item = buildChatItem({avatar:u.avatar||'?',name:u.name||'?',preview:u.status||'',time:'',unread:0,online:!!u.online});
@@ -1043,7 +1043,7 @@ async function loadDMList() {
   const { data: memberships } = await sb.from('conversation_members').select('conversation_id,unread_count,conversations(*)').eq('user_id',me.id);
   const dms = (memberships||[]).filter(m=>m.conversations?.type==='dm');
   el.innerHTML='';
-  if (!dms.length) { el.innerHTML='<div class="list-empty">No conversations yet.<br/>Add friends to start chatting!</div>'; return; }
+  if (!dms.length) { el.innerHTML='<div class="list-empty">No conversations yet.<br><button class="mini-btn" style="margin-top:.4rem;font-size:.7rem;padding:.2rem .4rem;" onclick="switchPanel(\'friends\')">Start Chatting</button></div>'; return; }
   for (const m of dms) {
     const conv = m.conversations;
     const { data: others } = await sb.from('conversation_members').select('user_id').eq('conversation_id',conv.id).neq('user_id',me.id);
@@ -1072,7 +1072,7 @@ async function loadRooms() {
   const { data } = await query;
   allRoomsCache = data || [];
   el.innerHTML='';
-  if (!data?.length) { el.innerHTML='<div class="list-empty">No rooms yet.</div>'; return; }
+  if (!data?.length) { el.innerHTML='<div class="list-empty">No rooms yet.<br><button class="mini-btn" style="margin-top:.4rem;font-size:.7rem;padding:.2rem .4rem;" onclick="openModal(\'create-room-modal\')">Create a Room</button></div>'; return; }
   data.forEach(r => {
     const preview = r.tags ? r.tags + ' · ' + (r.description||'') : r.description||'';
     const item = buildChatItem({avatar:'🏠',name:r.name,preview,time:'',unread:0});
@@ -1087,7 +1087,7 @@ async function loadGroups() {
   const { data: mbrs } = await sb.from('conversation_members').select('conversation_id,conversations(*)').eq('user_id',me.id);
   const groups = (mbrs||[]).filter(m=>m.conversations?.type==='group');
   el.innerHTML='';
-  if (!groups.length) { el.innerHTML='<div class="list-empty">No groups yet.</div>'; return; }
+  if (!groups.length) { el.innerHTML='<div class="list-empty">No groups yet.<br><button class="mini-btn" style="margin-top:.4rem;font-size:.7rem;padding:.2rem .4rem;" onclick="openCreateGroupModal()">Create a Group</button></div>'; return; }
   groups.forEach(({conversations:g})=>{
     const item = buildChatItem({avatar:g.icon||'👥',name:g.name,preview:'',time:'',unread:0});
     item.addEventListener('click',()=>openConv(g));
