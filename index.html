@@ -99,6 +99,15 @@
 </div>
 
 <div class="app" id="app" style="display:none">
+  <!-- GLOBAL ANNOUNCEMENT BANNER -->
+  <div class="announcement-banner" id="global-announcement-banner" style="display:none">
+    <div style="display:flex;align-items:center;gap:.6rem;color:var(--text);">
+      <i data-lucide="megaphone" style="width:16px;height:16px;color:var(--acc);"></i>
+      <span id="global-announcement-text">—</span>
+    </div>
+    <button class="announcement-banner-close" id="btn-close-announcement" style="border:none;background:none;cursor:pointer;"><i data-lucide="x" style="width:14px;height:14px;"></i></button>
+  </div>
+
   <div class="mob-overlay" id="mob-overlay"></div>
 
   <!-- INSTAGRAM STYLE LEFT SIDEBAR NAVIGATION -->
@@ -131,6 +140,10 @@
         <button class="nav-item" id="nav-btn-groups" data-panel="groups">
           <span class="nav-icon"><i data-lucide="users"></i></span>
           <span class="nav-label">Groups</span>
+        </button>
+        <button class="nav-item" id="nav-btn-admin" data-panel="admin" style="display:none">
+          <span class="nav-icon"><i data-lucide="shield-alert"></i></span>
+          <span class="nav-label">Admin Panel</span>
         </button>
         <button class="nav-item" id="nav-btn-profile">
           <span class="nav-icon"><i data-lucide="settings"></i></span>
@@ -211,6 +224,10 @@
 
     <!-- Rooms Panel -->
     <div class="sidebar-panel" id="panel-rooms">
+      <div class="sidebar-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="room-search" placeholder="Search rooms or #tags..."/>
+      </div>
       <div class="section-header"><span class="list-label">Public Rooms</span><button class="mini-btn" id="btn-create-room"><i data-lucide="plus"></i> New</button></div>
       <div id="rooms-inner"><div class="skeleton-list"></div></div>
     </div>
@@ -224,6 +241,87 @@
 
   <!-- CHAT AREA -->
   <main class="chat-area" id="chat-area">
+    <!-- Mentions autocomplete list -->
+    <div class="mention-autocomplete" id="mention-autocomplete"></div>
+
+    <!-- ADMIN PANEL -->
+    <div class="admin-panel-view" id="admin-panel-view" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:1rem;">
+        <h2 style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1.6rem;color:var(--text);margin:0;">Admin Dashboard</h2>
+        <button class="mini-btn" id="btn-close-admin" style="background:var(--danger);color:#fff;border-radius:8px;padding:.4rem 1rem;">Close Dashboard</button>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="admin-stats-grid" style="margin-top:1.5rem;">
+        <div class="admin-stat-card">
+          <div class="admin-stat-val" id="admin-stat-users">—</div>
+          <div class="admin-stat-lbl">Total Users</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-val" id="admin-stat-active">—</div>
+          <div class="admin-stat-lbl">Active Users</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-val" id="admin-stat-reports">—</div>
+          <div class="admin-stat-lbl">Open Reports</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-val" id="admin-stat-messages">—</div>
+          <div class="admin-stat-lbl">Total Messages</div>
+        </div>
+      </div>
+
+      <!-- Create Announcement -->
+      <div class="admin-content-section" style="margin-top:1rem;">
+        <h3 style="font-family:'Outfit',sans-serif;font-weight:700;font-size:1.1rem;margin:0 0 .5rem 0;">Broadcast Announcement</h3>
+        <div style="display:flex;gap:.8rem;">
+          <input type="text" id="admin-announce-in" placeholder="Type a global system announcement..." style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:.68rem .9rem;color:var(--text);font-size:.88rem;outline:none;"/>
+          <button class="auth-btn" id="btn-admin-announce" style="margin:0;width:auto;padding:.68rem 1.5rem;">Broadcast</button>
+        </div>
+      </div>
+
+      <!-- User Directory -->
+      <div class="admin-content-section" style="margin-top:1rem;">
+        <h3 style="font-family:'Outfit',sans-serif;font-weight:700;font-size:1.1rem;margin:0 0 .5rem 0;">User Management</h3>
+        <input type="text" id="admin-user-search" placeholder="Search user directory by name, username, or email..." style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:.68rem .9rem;color:var(--text);font-size:.88rem;outline:none;margin-bottom:.5rem;"/>
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-list">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Reports Moderation -->
+      <div class="admin-content-section" style="margin-top:1rem;">
+        <h3 style="font-family:'Outfit',sans-serif;font-weight:700;font-size:1.1rem;margin:0 0 .5rem 0;">Moderation Queue (Reports)</h3>
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Reporter</th>
+                <th>Reported User</th>
+                <th>Reason</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-reports-list">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- HOME FEED PANEL -->
     <div class="home-feed" id="home-feed">
       <div class="feed-main-container">
@@ -420,6 +518,31 @@
     <div class="info-panel-hdr"><span>Info</span><button id="btn-close-info"><i data-lucide="x"></i></button></div>
     <div class="info-panel-body" id="info-panel-body"></div>
   </div>
+
+  <!-- THREAD DRAWER -->
+  <div class="thread-drawer" id="thread-drawer" style="display:none">
+    <div class="info-panel-hdr">
+      <span>Message Thread</span>
+      <button id="btn-close-thread"><i data-lucide="x"></i></button>
+    </div>
+    <!-- Root Message Context -->
+    <div class="thread-root-msg" id="thread-root-msg">
+      <!-- Root message bubble -->
+    </div>
+    <!-- Replies List -->
+    <div class="thread-replies-list" id="thread-replies-list">
+      <!-- Replies will be dynamically populated -->
+    </div>
+    <!-- Reply Input Bar -->
+    <div class="input-bar" style="border-top:1px solid var(--border);padding:.6rem .8rem;">
+      <div class="msg-input-wrap" style="padding:.4rem .68rem;border:1px solid var(--border2);border-radius:12px;flex:1;background:var(--surface2);">
+        <textarea id="thread-reply-input" placeholder="Reply to thread..." rows="1" style="background:none;border:none;outline:none;font-size:.85rem;color:var(--text);width:100%;resize:none;max-height:80px;height:24px;padding:0;"></textarea>
+      </div>
+      <button class="send-btn" id="thread-reply-send-btn" style="width:34px;height:34px;box-shadow:none;flex-shrink:0;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- MOBILE BOTTOM NAV -->
@@ -476,6 +599,7 @@
           <button type="button" class="auth-btn" id="btn-confirm-2fa" style="margin-bottom:0;">Confirm & Enable 2FA</button>
         </div>
       </div>
+      <button class="auth-btn" id="btn-admin-dashboard" style="display:none;background:var(--danger);margin-top:.5rem;box-shadow:none;">Open Admin Dashboard</button>
       <button class="auth-btn" id="btn-save-profile" style="margin-top:.5rem;">Save Changes</button>
     </div>
   </div>
@@ -486,8 +610,13 @@
   <div class="modal">
     <div class="modal-head">Create Room <button id="btn-close-room"><i data-lucide="x"></i></button></div>
     <div class="modal-body">
-      <div class="form-group"><label>Room Name</label><input type="text" id="room-name-in" placeholder="e.g. general" maxlength="30"/></div>
-      <div class="form-group"><label>Description</label><input type="text" id="room-desc-in" placeholder="What's this room about?" maxlength="80"/></div>
+      <div class="form-group"><label>Room Name</label><input type="text" id="room-name-in" placeholder="e.g. Lounge" maxlength="40"/></div>
+      <div class="form-group"><label>Hashtags (space separated)</label><input type="text" id="room-tags-in" placeholder="e.g. #gaming #tech #chat" maxlength="80"/></div>
+      <div class="form-group"><label>Description</label><textarea id="room-desc-in" placeholder="What's this room about?" maxlength="120" rows="2" style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:.68rem .9rem;color:var(--text);font-size:.88rem;outline:none;resize:none;width:100%;"></textarea></div>
+      <label style="display:flex;align-items:center;gap:.6rem;font-size:.83rem;cursor:pointer;margin-bottom:.8rem;color:var(--text);">
+        <input type="checkbox" id="room-private-in" style="width:16px;height:16px;accent-color:var(--acc);"/>
+        Private Room (Invite Only)
+      </label>
       <button class="auth-btn" id="btn-confirm-room">Create Room</button>
     </div>
   </div>
@@ -504,6 +633,10 @@
         <div class="gm-results" id="gm-results" style="max-height:160px;overflow-y:auto;margin-top:.4rem;"></div>
         <div class="selected-members" id="sel-members"></div>
       </div>
+      <label style="display:flex;align-items:center;gap:.6rem;font-size:.83rem;cursor:pointer;margin-bottom:.8rem;color:var(--text);">
+        <input type="checkbox" id="group-private-in" style="width:16px;height:16px;accent-color:var(--acc);"/>
+        Private Group (Invite Only)
+      </label>
       <button class="auth-btn" id="btn-confirm-group">Create Group</button>
     </div>
   </div>
@@ -560,6 +693,8 @@
 <!-- Context Menu -->
 <div class="ctx-menu" id="ctx-menu" style="display:none">
   <button id="ctx-reply"><i data-lucide="reply"></i> Reply</button>
+  <button id="ctx-thread"><i data-lucide="message-square"></i> Reply in Thread</button>
+  <button id="ctx-star"><i data-lucide="star"></i> Star Message</button>
   <button id="ctx-copy"><i data-lucide="copy"></i> Copy</button>
   <button id="ctx-pin"><i data-lucide="pin"></i> Pin</button>
   <button id="ctx-disappear"><i data-lucide="clock"></i> Set Timer</button>

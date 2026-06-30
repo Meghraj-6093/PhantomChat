@@ -97,7 +97,15 @@ function showApp() {
     }).catch(err => console.log('PWA Service Worker Registration Failed:', err));
   }
 
-  loadMyProfile();
+  loadMyProfile().then(() => {
+    if (myData.role === 'owner' || myData.role === 'admin' || myData.role === 'moderator') {
+      if ($('nav-btn-admin')) $('nav-btn-admin').style.display = 'flex';
+      if ($('btn-admin-dashboard')) $('btn-admin-dashboard').style.display = 'block';
+    } else {
+      if ($('nav-btn-admin')) $('nav-btn-admin').style.display = 'none';
+      if ($('btn-admin-dashboard')) $('btn-admin-dashboard').style.display = 'none';
+    }
+  });
   loadDMList();
   loadFriendRequests();
   loadFriendsList();
@@ -110,6 +118,10 @@ function showApp() {
   startDisappearChecker();
   loadSettings();
   setupMobile();
+  setupMentions();
+  setupAdminDashboard();
+  setupHashtagsSearch();
+  setupAnnouncements();
   
   // Default routing to feed panel
   switchFeedOrChat('feed');
@@ -314,11 +326,16 @@ function wireUI() {
 
   // Context menu
   $('ctx-reply').onclick    = doReply;
+  $('ctx-thread').onclick   = doOpenThread;
+  $('ctx-star').onclick     = doStarMsg;
   $('ctx-copy').onclick     = doCopy;
   $('ctx-edit').onclick     = doEdit;
   $('ctx-pin').onclick      = doPinMsg;
   $('ctx-disappear').onclick = () => { hideCtx(); if ($('disappear-modal')) openModal('disappear-modal'); };
   $('ctx-delete').onclick   = doDelete;
+  if ($('btn-close-thread')) $('btn-close-thread').onclick = () => { $('thread-drawer').style.display = 'none'; };
+  if ($('thread-reply-send-btn')) $('thread-reply-send-btn').onclick = sendThreadReply;
+  if ($('thread-reply-input')) $('thread-reply-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendThreadReply(); } });
   if ($('btn-close-disappear')) $('btn-close-disappear').onclick = () => closeModal('disappear-modal');
   document.querySelectorAll('.disappear-options button').forEach(b => b.addEventListener('click', () => { setMsgDisappear(contextTarget?.msgId, parseInt(b.dataset.secs)||0); closeModal('disappear-modal'); }));
   document.addEventListener('click', e => { if (!e.target.closest('.ctx-menu')) hideCtx(); });
@@ -1030,10 +1047,12 @@ async function loadDMList() {
 async function loadRooms() {
   const el = $('rooms-inner'); showSkeleton(el, 3);
   const { data } = await sb.from('conversations').select('*').eq('type','room').order('created_at');
+  allRoomsCache = data || [];
   el.innerHTML='';
   if (!data?.length) { el.innerHTML='<div class="list-empty">No rooms yet.</div>'; return; }
   data.forEach(r => {
-    const item = buildChatItem({avatar:'🏠',name:r.name,preview:r.description||'',time:'',unread:0});
+    const preview = r.tags ? r.tags + ' · ' + (r.description||'') : r.description||'';
+    const item = buildChatItem({avatar:'🏠',name:r.name,preview,time:'',unread:0});
     item.addEventListener('click',()=>openConv(r));
     if (currentChat?.convId===r.id) item.classList.add('active');
     el.appendChild(item);
@@ -1072,6 +1091,7 @@ async function searchDmUsers(q) {
 //  OPEN CHATS
 // ═══════════════════════════════════════════════════════════
 async function openDM(user, existingConvId=null) {
+  currentChatMembers = [];
   let convId = existingConvId;
   if (!convId) {
     const { data: myConvs }    = await sb.from('conversation_members').select('conversation_id').eq('user_id',me.id);
@@ -1108,6 +1128,7 @@ async function openDM(user, existingConvId=null) {
 }
 
 async function openConv(conv) {
+  currentChatMembers = [];
   let count = 0;
   if (conv.type==='group') { const {count:c} = await sb.from('conversation_members').select('*',{count:'exact',head:true}).eq('conversation_id',conv.id); count=c||0; }
   currentChat = {convId:conv.id, type:conv.type, name:conv.name, avatar:conv.icon||(conv.type==='room'?'🏠':'👥')};
@@ -1185,7 +1206,7 @@ function subscribePresence() {
 // ═══════════════════════════════════════════════════════════
 async function loadMessages(convId) {
   const list = $('messages-list'); showSkeletonBubbles(list);
-  const { data: msgs } = await sb.from('messages').select('*,reactions(*)').eq('conversation_id',convId).order('created_at',{ascending:true}).limit(100);
+  const { data: msgs } = await sb.from('messages').select('*,reactions(*)').eq('conversation_id',convId).is('thread_parent_id', null).order('created_at',{ascending:true}).limit(100);
   list.innerHTML='';
   let lastDay=null;
   (msgs||[]).forEach(msg => {
@@ -1195,13 +1216,25 @@ async function loadMessages(convId) {
   });
   scrollBottom();
   // Mark read
-  if (currentChat?.type==='dm') await sb.from('conversation_members').update({unread_count:0}).eq('conversation_id',convId).eq('user_id',me.id);
+  if (currentChat?.type==='dm') {
+    await sb.from('conversation_members').update({unread_count:0}).eq('conversation_id',convId).eq('user_id',me.id);
+    const { data: unread } = await sb.from('messages').select('id, read_by').eq('conversation_id', convId).neq('sender_id', me.id);
+    if (unread?.length) {
+      for (const msg of unread) {
+        const readBy = msg.read_by || [];
+        if (!readBy.includes(me.id)) {
+          await sb.from('messages').update({ read_by: [...readBy, me.id] }).eq('id', msg.id);
+        }
+      }
+    }
+  }
 }
 
 function subscribeMessages(convId) {
   const sub = sb.channel('msgs-'+convId)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`conversation_id=eq.${convId}`},async p=>{
-      const msg=p.new; const {data:reactions}=await sb.from('reactions').select('*').eq('message_id',msg.id); msg.reactions=reactions||[];
+      const msg=p.new; if (msg.thread_parent_id) return;
+      const {data:reactions}=await sb.from('reactions').select('*').eq('message_id',msg.id); msg.reactions=reactions||[];
       const list=$('messages-list');
       const day=new Date(msg.created_at).toDateString();
       const last=list.querySelector('.date-divider:last-of-type');
@@ -1232,7 +1265,10 @@ function buildBubble(msg) {
   const row = mk('div',`msg-row ${isMe?'me':'them'}`); row.dataset.id=msg.id;
   if (!isMe) { const av=mk('div','avatar'); av.style.cssText='width:26px;height:26px;font-size:.72rem;flex-shrink:0;margin-bottom:2px;'; renderAv(av,msg.sender_avatar||'?'); row.appendChild(av); }
   const wrap = mk('div','msg-wrap');
-  if (!isMe&&currentChat?.type!=='dm') wrap.appendChild(mk('div','msg-name',esc(msg.sender_name||'?')));
+  if (!isMe&&currentChat?.type!=='dm') {
+    const nameEl = mk('div','msg-name',esc(msg.sender_name||'?'));
+    wrap.appendChild(nameEl);
+  }
   const bubble = mk('div','bubble');
   if (msg.disappears_at&&!msg.deleted) { bubble.classList.add('disappearing'); const rem=Math.max(0,Math.round((new Date(msg.disappears_at)-Date.now())/1000)); bubble.innerHTML+=`<div class="disappear-timer">⏱${rem}s</div>`; }
   if (msg.deleted) { bubble.classList.add('deleted'); bubble.textContent='🚫 Message deleted'; }
@@ -1246,20 +1282,35 @@ function buildBubble(msg) {
       bubble.appendChild(link);
     }
     if (msg.voice_url) { bubble.appendChild(buildVoiceBubble(msg)); }
-    else if (msg.text) { const s=mk('span'); s.textContent=msg.text; bubble.appendChild(s); }
+    else if (msg.text) { const s=mk('span'); s.innerHTML=formatMentions(msg.text); bubble.appendChild(s); }
     if (msg.edited) bubble.appendChild(mk('span','edited-lbl',' (edited)'));
   }
   bubble.addEventListener('contextmenu',e=>{e.preventDefault();contextTarget={msgId:msg.id,senderId:msg.sender_id,text:msg.text||'',senderName:msg.sender_name||'?'};showCtx(e.clientX,e.clientY,isMe&&!msg.deleted);});
   let lp; bubble.addEventListener('touchstart',e=>{lp=setTimeout(()=>{contextTarget={msgId:msg.id,senderId:msg.sender_id,text:msg.text||'',senderName:msg.sender_name||'?'};const t=e.touches[0];showCtx(t.clientX,t.clientY,isMe&&!msg.deleted);},500);});
   bubble.addEventListener('touchend',()=>clearTimeout(lp));
   wrap.appendChild(bubble);
+  
   const meta=mk('div','msg-meta'); meta.appendChild(mk('span','msg-time',fmtTime(msg.created_at)));
+  const isStarred = (msg.starred_by || []).includes(me.id);
+  if (isStarred) {
+    const star = mk('span', 'star-badge', '⭐');
+    star.style.cssText = 'color:#f59e0b;font-size:0.75rem;margin-left:0.3rem;vertical-align:middle;';
+    meta.appendChild(star);
+  }
   if (isMe&&!msg.deleted) {
     const readArr=msg.read_by||[]; const delArr=msg.delivered_to||[];
     const hasRead=readArr.some(k=>k!==me.id); const hasDel=delArr.some(k=>k!==me.id);
-    meta.appendChild(mk('span',hasRead?'tick-read':hasDel?'tick-delivered':'tick-sent', hasRead?'✓✓':hasDel?'✓✓':'✓'));
+    const tickClass = hasRead ? 'tick-read' : hasDel ? 'tick-delivered' : 'tick-sent';
+    const tickSpan = mk('span', `msg-receipt ${tickClass}`);
+    if (hasRead || hasDel) {
+      tickSpan.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;"><path d="M17 6L8.5 14.5L5 11M22 6L13.5 14.5L12 13"/></svg>`;
+    } else {
+      tickSpan.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;"><polyline points="20 6 9 17 4 12"/></svg>`;
+    }
+    meta.appendChild(tickSpan);
   }
   wrap.appendChild(meta);
+  
   const reactions=msg.reactions||[];
   if (reactions.length&&!msg.deleted) {
     const counts={}; reactions.forEach(r=>{if(!counts[r.emoji])counts[r.emoji]={emoji:r.emoji,uids:[]};counts[r.emoji].uids.push(r.user_id);});
@@ -1269,6 +1320,24 @@ function buildBubble(msg) {
       wrap.appendChild(rr);
     }
   }
+  
+  if (!isMe) {
+    getUserMeta(msg.sender_id).then(meta => {
+      const nameEl = wrap.querySelector('.msg-name');
+      if (nameEl && !nameEl.querySelector('.badge-verified')) {
+        if (meta.is_verified) {
+          const v = mk('span', 'badge-verified');
+          v.innerHTML = '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+          nameEl.appendChild(v);
+        }
+        if (meta.role && meta.role !== 'user') {
+          const r = mk('span', `badge-role ${meta.role}`, meta.role);
+          nameEl.appendChild(r);
+        }
+      }
+    });
+  }
+  
   row.appendChild(wrap); return row;
 }
 
@@ -1592,6 +1661,7 @@ async function toggleInfo(){
       item.append(av,info);body.appendChild(item);
     });
   }
+  await loadStarredMessages(currentChat.convId, body);
   if(window.innerWidth<=768)$('mob-overlay').classList.add('show');
 }
 
@@ -1600,10 +1670,22 @@ async function toggleInfo(){
 // ═══════════════════════════════════════════════════════════
 async function createRoom(){
   const name=$('room-name-in').value.trim();if(!name){toast('Enter a room name');return;}
-  const{data:conv,error}=await sb.from('conversations').insert({type:'room',name,description:$('room-desc-in').value.trim(),created_by:me.id}).select().single();
+  const tags = $('room-tags-in') ? $('room-tags-in').value.trim() : '';
+  const isPrivate = $('room-private-in') ? $('room-private-in').checked : false;
+  const{data:conv,error}=await sb.from('conversations').insert({
+    type:'room',
+    name,
+    description:$('room-desc-in').value.trim(),
+    tags,
+    is_private:isPrivate,
+    created_by:me.id
+  }).select().single();
   if(error){toast('Error: '+error.message);return;}
   await sb.from('conversation_members').insert({conversation_id:conv.id,user_id:me.id,role:'admin'});
-  $('room-name-in').value='';$('room-desc-in').value='';closeModal('create-room-modal');toast('Room created!');loadRooms();
+  $('room-name-in').value='';$('room-desc-in').value='';
+  if($('room-tags-in'))$('room-tags-in').value='';
+  if($('room-private-in'))$('room-private-in').checked=false;
+  closeModal('create-room-modal');toast('Room created!');loadRooms();
 }
 
 async function openCreateGroupModal(){
@@ -1637,10 +1719,18 @@ function addGroupMember(uid,name,el){
 async function createGroup(){
   const name=$('group-name-in').value.trim();if(!name){toast('Enter a group name');return;}
   if(!groupMemberIds.length){toast('Add at least one member');return;}
-  const{data:conv,error}=await sb.from('conversations').insert({type:'group',name,icon:'👥',created_by:me.id}).select().single();
+  const isPrivate = $('group-private-in') ? $('group-private-in').checked : false;
+  const{data:conv,error}=await sb.from('conversations').insert({
+    type:'group',
+    name,
+    icon:'👥',
+    is_private:isPrivate,
+    created_by:me.id
+  }).select().single();
   if(error){toast('Error: '+error.message);return;}
   const members=[{conversation_id:conv.id,user_id:me.id,role:'admin'},...groupMemberIds.map(uid=>({conversation_id:conv.id,user_id:uid,role:'member'}))];
   await sb.from('conversation_members').insert(members);
+  if($('group-private-in'))$('group-private-in').checked=false;
   closeModal('create-group-modal');toast('Group created!');loadGroups();
 }
 
@@ -2114,4 +2204,604 @@ async function submitFeedPost() {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Post';
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PHANTOM v5 EXTENDED FEATURES
+// ═══════════════════════════════════════════════════════════
+
+// ── USER METADATA CACHE ──
+const userCache = {};
+
+async function getUserMeta(userId) {
+  if (userCache[userId]) return userCache[userId];
+  const { data: u } = await sb.from('users').select('role, is_verified, is_banned').eq('id', userId).single();
+  if (u) {
+    userCache[userId] = u;
+    return u;
+  }
+  return { role: 'user', is_verified: false, is_banned: false };
+}
+
+// ── STARRED MESSAGES ──
+async function doStarMsg() {
+  hideCtx();
+  if (!contextTarget) return;
+  const msgId = contextTarget.msgId;
+  const { data: msg } = await sb.from('messages').select('starred_by').eq('id', msgId).single();
+  if (!msg) return;
+
+  let starred = msg.starred_by || [];
+  if (starred.includes(me.id)) {
+    starred = starred.filter(id => id !== me.id);
+    toast('Message unstarred');
+  } else {
+    starred.push(me.id);
+    toast('Message starred! ⭐');
+  }
+  await sb.from('messages').update({ starred_by: starred }).eq('id', msgId);
+  loadMessages(currentChat.convId);
+}
+
+async function loadStarredMessages(convId, parentEl) {
+  parentEl.appendChild(mk('div', 'info-sec-title', '⭐ Starred Messages'));
+  const starredList = mk('div', 'starred-messages-list');
+  parentEl.appendChild(starredList);
+
+  const { data: msgs } = await sb.from('messages')
+    .select('*')
+    .eq('conversation_id', convId)
+    .contains('starred_by', [me.id])
+    .order('created_at', { ascending: false });
+
+  starredList.innerHTML = '';
+  if (!msgs?.length) {
+    starredList.innerHTML = '<div style="font-size:.75rem;color:var(--text3);padding:.2rem 0;">No starred messages</div>';
+    return;
+  }
+  msgs.forEach(m => {
+    const item = mk('div', 'starred-msg-item');
+    item.innerHTML = `
+      <div class="starred-msg-hdr">
+        <span>${esc(m.sender_name || 'User')}</span>
+        <span>${fmtTime(m.created_at)}</span>
+      </div>
+      <div class="starred-msg-body">${esc(m.text || '[Attachment]')}</div>
+    `;
+    starredList.appendChild(item);
+  });
+}
+
+// ── THREADS DRAWER ──
+let currentThreadRootId = null;
+let threadSub = null;
+
+async function doOpenThread() {
+  hideCtx();
+  if (!contextTarget) return;
+  const msgId = contextTarget.msgId;
+  currentThreadRootId = msgId;
+
+  $('info-panel').style.display = 'none';
+  $('thread-drawer').style.display = 'flex';
+
+  const { data: msg } = await sb.from('messages').select('*').eq('id', msgId).single();
+  if (!msg) return;
+
+  const rootEl = $('thread-root-msg');
+  rootEl.innerHTML = '';
+  
+  // Render root message in thread
+  const bubble = buildBubble(msg);
+  const cloned = bubble.cloneNode(true);
+  rootEl.appendChild(cloned);
+
+  await loadThreadReplies();
+  subscribeThreadReplies();
+}
+
+async function loadThreadReplies() {
+  if (!currentThreadRootId) return;
+  const { data: replies } = await sb.from('messages')
+    .select('*')
+    .eq('thread_parent_id', currentThreadRootId)
+    .order('created_at', { ascending: true });
+
+  const listEl = $('thread-replies-list');
+  listEl.innerHTML = '';
+  if (!replies?.length) {
+    listEl.innerHTML = '<div style="font-size:.78rem;color:var(--text3);text-align:center;padding:1rem;">No replies yet. Start the thread!</div>';
+    return;
+  }
+  replies.forEach(r => {
+    const row = mk('div', `thread-reply-item ${r.sender_id === me.id ? 'me' : 'them'}`);
+    const av = mk('div', 'avatar');
+    renderAv(av, r.sender_avatar || '?');
+    av.style.cssText = 'width:24px;height:24px;font-size:.65rem;flex-shrink:0;';
+    
+    const wrap = mk('div', 'msg-wrap');
+    const name = mk('div', 'msg-name', esc(r.sender_name || '?'));
+    name.style.fontSize = '.7rem';
+    wrap.appendChild(name);
+    
+    const bubble = mk('div', 'bubble');
+    bubble.style.padding = '.5rem .7rem';
+    bubble.style.fontSize = '.8rem';
+    
+    const s = mk('span');
+    s.innerHTML = formatMentions(r.text);
+    bubble.appendChild(s);
+    
+    const meta = mk('div', 'msg-meta');
+    meta.appendChild(mk('span', 'msg-time', fmtTime(r.created_at)));
+    
+    wrap.appendChild(bubble);
+    wrap.appendChild(meta);
+    row.append(av, wrap);
+    listEl.appendChild(row);
+  });
+  listEl.scrollTop = listEl.scrollHeight;
+}
+
+function subscribeThreadReplies() {
+  if (threadSub) threadSub.unsubscribe();
+  threadSub = sb.channel('thread-replies-' + currentThreadRootId)
+    .on('postgres_changes', { 
+      event: 'INSERT', 
+      schema: 'public', 
+      table: 'messages', 
+      filter: `thread_parent_id=eq.${currentThreadRootId}` 
+    }, async () => {
+      await loadThreadReplies();
+    })
+    .subscribe();
+}
+
+async function sendThreadReply() {
+  const input = $('thread-reply-input');
+  const text = input.value.trim();
+  if (!text || !currentThreadRootId) return;
+
+  input.value = '';
+  const { error } = await sb.from('messages').insert({
+    conversation_id: currentChat.convId,
+    sender_id: me.id,
+    sender_name: myData.name || 'User',
+    sender_avatar: myData.avatar || '😀',
+    text: text,
+    thread_parent_id: currentThreadRootId,
+    read_by: [me.id],
+    delivered_to: [me.id]
+  });
+
+  if (error) {
+    toast('Failed to send reply: ' + error.message);
+  } else {
+    await loadThreadReplies();
+  }
+}
+
+// ── MENTIONS AUTOCOMPLETE ──
+let mentionActive = false;
+let mentionIndex = 0;
+let mentionQuery = '';
+let mentionStartIndex = -1;
+let currentChatMembers = [];
+
+function setupMentions() {
+  const inp = $('msg-input');
+  const box = $('mention-autocomplete');
+  if (!inp || !box) return;
+
+  inp.addEventListener('input', async () => {
+    const val = inp.value;
+    const pos = inp.selectionStart;
+    const textBeforeCursor = val.substring(0, pos);
+    const lastAtIdx = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIdx !== -1 && (lastAtIdx === 0 || /\s/.test(textBeforeCursor[lastAtIdx - 1]))) {
+      const query = textBeforeCursor.substring(lastAtIdx + 1);
+      if (!/\s/.test(query)) {
+        mentionActive = true;
+        mentionStartIndex = lastAtIdx;
+        mentionQuery = query;
+        await showMentionSuggestions(query);
+        return;
+      }
+    }
+    closeMentions();
+  });
+
+  inp.addEventListener('keydown', (e) => {
+    if (!mentionActive) return;
+    const items = box.querySelectorAll('.mention-item');
+    if (!items.length) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[mentionIndex].classList.remove('active');
+      mentionIndex = (mentionIndex + 1) % items.length;
+      items[mentionIndex].classList.add('active');
+      items[mentionIndex].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[mentionIndex].classList.remove('active');
+      mentionIndex = (mentionIndex - 1 + items.length) % items.length;
+      items[mentionIndex].classList.add('active');
+      items[mentionIndex].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      selectMention(items[mentionIndex].dataset.username);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeMentions();
+    }
+  });
+}
+
+async function showMentionSuggestions(q) {
+  const box = $('mention-autocomplete');
+  box.innerHTML = '';
+  mentionIndex = 0;
+
+  if (!currentChatMembers.length && currentChat) {
+    if (currentChat.type === 'dm') {
+      const { data: u } = await sb.from('users').select('*').eq('id', currentChat.otherId).single();
+      currentChatMembers = u ? [u] : [];
+    } else {
+      const { data: members } = await sb.from('conversation_members')
+        .select('users(*)')
+        .eq('conversation_id', currentChat.convId);
+      currentChatMembers = (members || []).map(m => m.users).filter(Boolean);
+    }
+  }
+
+  const filtered = currentChatMembers.filter(u => 
+    (u.name || '').toLowerCase().includes(q.toLowerCase()) || 
+    (u.username || '').toLowerCase().includes(q.toLowerCase())
+  );
+
+  if (!filtered.length) {
+    box.style.display = 'none';
+    return;
+  }
+
+  filtered.forEach((u, idx) => {
+    const item = mk('div', `mention-item${idx === 0 ? ' active' : ''}`);
+    item.dataset.username = u.username || u.name;
+    const av = mk('div', 'avatar');
+    renderAv(av, u.avatar || '?');
+    av.style.cssText = 'width:20px;height:20px;font-size:.6rem;flex-shrink:0;';
+    
+    const info = mk('div');
+    info.style.cssText = 'flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    info.innerHTML = `<b>${esc(u.name || '')}</b> <span style="font-size:.7rem;color:var(--text3);">@${esc(u.username || '')}</span>`;
+    
+    item.append(av, info);
+    item.onclick = () => selectMention(u.username || u.name);
+    box.appendChild(item);
+  });
+  box.style.display = 'flex';
+}
+
+function selectMention(username) {
+  const inp = $('msg-input');
+  const val = inp.value;
+  const pos = inp.selectionEnd;
+  const before = val.substring(0, mentionStartIndex);
+  const after = val.substring(pos);
+  inp.value = before + '@' + username + ' ' + after;
+  inp.focus();
+  const newPos = mentionStartIndex + username.length + 2;
+  inp.selectionStart = inp.selectionEnd = newPos;
+  closeMentions();
+  autoResize(inp);
+}
+
+function closeMentions() {
+  mentionActive = false;
+  const box = $('mention-autocomplete');
+  if (box) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+  }
+}
+
+function formatMentions(text) {
+  if (!text) return '';
+  return esc(text).replace(/@([a-zA-Z0-9_]{3,20})/g, (match, username) => {
+    return `<span class="mention-badge" style="cursor:pointer;" onclick="openProfileByUsername('${username}')">@${username}</span>`;
+  });
+}
+
+async function openProfileByUsername(username) {
+  const { data: u } = await sb.from('users').select('*').eq('username', username.toLowerCase()).maybeSingle();
+  if (u) openDM(u);
+  else toast('User not found');
+}
+
+// ── ANNOUNCEMENTS BANNER ──
+function setupAnnouncements() {
+  sb.channel('announcements')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, async p => {
+      if (p.new.conversation_id === '00000000-0000-0000-0000-000000000000') {
+        showGlobalAnnouncement(p.new.text);
+      }
+    })
+    .subscribe();
+  
+  if ($('btn-close-announcement')) {
+    $('btn-close-announcement').onclick = () => {
+      $('global-announcement-banner').style.display = 'none';
+    };
+  }
+}
+
+function showGlobalAnnouncement(text) {
+  const banner = $('global-announcement-banner');
+  const textEl = $('global-announcement-text');
+  if (banner && textEl) {
+    textEl.textContent = text;
+    banner.style.display = 'flex';
+  }
+}
+
+// ── ADMIN DASHBOARD ──
+let adminUsers = [];
+
+function setupAdminDashboard() {
+  const btnAdmin = $('nav-btn-admin');
+  const btnDashboard = $('btn-admin-dashboard');
+  
+  const showAdmin = async () => {
+    closeChat();
+    $('home-feed').style.display = 'none';
+    $('chat-placeholder').style.display = 'none';
+    $('active-chat').style.display = 'none';
+    $('admin-panel-view').style.display = 'flex';
+    
+    document.querySelectorAll('.nav-item').forEach(b => {
+      b.classList.toggle('active', b.id === 'nav-btn-admin');
+    });
+    
+    closeModal('profile-modal');
+    await loadAdminStats();
+    await loadAdminUsers();
+    await loadAdminReports();
+  };
+
+  if (btnAdmin) btnAdmin.onclick = showAdmin;
+  if (btnDashboard) btnDashboard.onclick = showAdmin;
+  
+  if ($('btn-close-admin')) {
+    $('btn-close-admin').onclick = () => {
+      $('admin-panel-view').style.display = 'none';
+      switchFeedOrChat('feed');
+    };
+  }
+
+  if ($('btn-admin-announce')) $('btn-admin-announce').onclick = broadcastAnnouncement;
+  if ($('admin-user-search')) {
+    let usd;
+    $('admin-user-search').oninput = (e) => {
+      clearTimeout(usd);
+      usd = setTimeout(() => filterAdminUsers(e.target.value.trim()), 300);
+    };
+  }
+}
+
+async function loadAdminStats() {
+  const { count: usersCount } = await sb.from('users').select('*', { count: 'exact', head: true });
+  $('admin-stat-users').textContent = usersCount || 0;
+
+  const { count: activeCount } = await sb.from('users').select('*', { count: 'exact', head: true }).eq('online', true);
+  $('admin-stat-active').textContent = activeCount || 0;
+
+  const { count: reportsCount } = await sb.from('reports').select('*', { count: 'exact', head: true });
+  $('admin-stat-reports').textContent = reportsCount || 0;
+
+  const { count: messagesCount } = await sb.from('messages').select('*', { count: 'exact', head: true });
+  $('admin-stat-messages').textContent = messagesCount || 0;
+}
+
+async function loadAdminUsers() {
+  const { data } = await sb.from('users').select('*').order('name');
+  adminUsers = data || [];
+  renderAdminUsers(adminUsers);
+}
+
+function renderAdminUsers(users) {
+  const list = $('admin-users-list');
+  list.innerHTML = '';
+  
+  users.forEach(u => {
+    const tr = mk('tr');
+    
+    const tdUser = mk('td');
+    tdUser.style.display = 'flex';
+    tdUser.style.alignItems = 'center';
+    tdUser.style.gap = '0.5rem';
+    const av = mk('div', 'avatar');
+    renderAv(av, u.avatar || '?');
+    av.style.cssText = 'width:24px;height:24px;font-size:.65rem;';
+    const info = mk('div');
+    info.innerHTML = `<b>${esc(u.name || '')}</b><br><span style="font-size:.7rem;color:var(--text3);">@${esc(u.username || '')}</span>`;
+    tdUser.append(av, info);
+    
+    const tdRole = mk('td');
+    tdRole.innerHTML = `<span class="badge-role ${u.role || 'user'}">${u.role || 'user'}</span>`;
+    
+    const tdStatus = mk('td');
+    if (u.is_banned) {
+      tdStatus.innerHTML = '<span style="color:var(--danger);font-weight:600;">Suspended</span>';
+    } else {
+      tdStatus.innerHTML = u.online ? '<span style="color:var(--online);font-weight:600;">Online</span>' : '<span style="color:var(--text3);">Offline</span>';
+    }
+    
+    const tdActions = mk('td');
+    tdActions.style.display = 'flex';
+    tdActions.style.gap = '0.4rem';
+    
+    if (!u.is_verified) {
+      const btnVerify = mk('button', 'admin-btn admin-btn-verify', 'Verify');
+      btnVerify.onclick = async () => {
+        await sb.from('users').update({ is_verified: true }).eq('id', u.id);
+        toast('User verified ✓');
+        await loadAdminUsers();
+      };
+      tdActions.appendChild(btnVerify);
+    }
+    
+    if (u.is_banned) {
+      const btnUnban = mk('button', 'admin-btn admin-btn-unban', 'Unban');
+      btnUnban.onclick = async () => {
+        await sb.from('users').update({ is_banned: false }).eq('id', u.id);
+        toast('User unsuspended');
+        await loadAdminUsers();
+      };
+      tdActions.appendChild(btnUnban);
+    } else {
+      const btnBan = mk('button', 'admin-btn admin-btn-ban', 'Suspend');
+      btnBan.onclick = async () => {
+        if (u.role === 'owner') { toast('Cannot suspend owner'); return; }
+        await sb.from('users').update({ is_banned: true }).eq('id', u.id);
+        toast('User suspended');
+        await loadAdminUsers();
+      };
+      tdActions.appendChild(btnBan);
+    }
+    
+    const btnDel = mk('button', 'admin-btn admin-btn-delete', 'Delete');
+    btnDel.onclick = async () => {
+      if (u.role === 'owner') { toast('Cannot delete owner'); return; }
+      if (confirm(`Are you sure you want to permanently delete user ${u.name}?`)) {
+        await sb.from('users').delete().eq('id', u.id);
+        toast('User deleted');
+        await loadAdminUsers();
+      }
+    };
+    tdActions.appendChild(btnDel);
+
+    tr.append(tdUser, tdRole, tdStatus, tdActions);
+    list.appendChild(tr);
+  });
+}
+
+function filterAdminUsers(q) {
+  if (!q) {
+    renderAdminUsers(adminUsers);
+    return;
+  }
+  const filtered = adminUsers.filter(u => 
+    (u.name || '').toLowerCase().includes(q.toLowerCase()) || 
+    (u.username || '').toLowerCase().includes(q.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(q.toLowerCase())
+  );
+  renderAdminUsers(filtered);
+}
+
+async function loadAdminReports() {
+  const { data } = await sb.from('reports').select('*, reporter:users!reports_reporter_id_fkey(*), reported:users!reports_reported_id_fkey(*)');
+  const list = $('admin-reports-list');
+  list.innerHTML = '';
+
+  if (!data?.length) {
+    list.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);">No reports submitted.</td></tr>';
+    return;
+  }
+
+  data.forEach(r => {
+    const tr = mk('tr');
+    tr.innerHTML = `
+      <td><b>${esc(r.reporter?.name || 'User')}</b><br><span style="font-size:.7rem;color:var(--text3);">@${esc(r.reporter?.username || '')}</span></td>
+      <td><b>${esc(r.reported?.name || 'User')}</b><br><span style="font-size:.7rem;color:var(--text3);">@${esc(r.reported?.username || '')}</span></td>
+      <td>${esc(r.reason || 'No reason specified')}</td>
+    `;
+    
+    const tdAct = mk('td');
+    tdAct.style.display = 'flex';
+    tdAct.style.gap = '0.4rem';
+    
+    const btnDismiss = mk('button', 'admin-btn admin-btn-verify', 'Dismiss');
+    btnDismiss.onclick = async () => {
+      await sb.from('reports').delete().eq('id', r.id);
+      toast('Report dismissed');
+      await loadAdminReports();
+    };
+    tdAct.appendChild(btnDismiss);
+    
+    if (r.reported && !r.reported.is_banned) {
+      const btnBan = mk('button', 'admin-btn admin-btn-ban', 'Suspend');
+      btnBan.onclick = async () => {
+        await sb.from('users').update({ is_banned: true }).eq('id', r.reported_id);
+        await sb.from('reports').delete().eq('id', r.id);
+        toast('Offender suspended and report resolved');
+        await loadAdminReports();
+      };
+      tdAct.appendChild(btnBan);
+    }
+    
+    tr.appendChild(tdAct);
+    list.appendChild(tr);
+  });
+}
+
+async function broadcastAnnouncement() {
+  const input = $('admin-announce-in');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const { error } = await sb.from('messages').insert({
+    conversation_id: '00000000-0000-0000-0000-000000000000',
+    sender_id: me.id,
+    sender_name: 'SYSTEM ANNOUNCEMENT',
+    sender_avatar: '📢',
+    text: text
+  });
+
+  if (error) toast('Announcement failed: ' + error.message);
+  else toast('Announcement broadcasted! 📢');
+}
+
+// ── DISCOVERABILITY ROOM SEARCH & HASHTAGS ──
+let allRoomsCache = [];
+
+function setupHashtagsSearch() {
+  const roomIn = $('room-search');
+  if (!roomIn) return;
+  
+  let rsd;
+  roomIn.oninput = (e) => {
+    clearTimeout(rsd);
+    rsd = setTimeout(() => filterRoomsList(e.target.value.trim()), 300);
+  };
+}
+
+function filterRoomsList(q) {
+  const list = $('rooms-inner');
+  if (!q) {
+    loadRooms();
+    return;
+  }
+  
+  list.innerHTML = '';
+  const filtered = allRoomsCache.filter(r => 
+    (r.name || '').toLowerCase().includes(q.toLowerCase()) ||
+    (r.description || '').toLowerCase().includes(q.toLowerCase()) ||
+    (r.tags || '').toLowerCase().includes(q.toLowerCase())
+  );
+  
+  if (!filtered.length) {
+    list.innerHTML = '<div class="list-empty">No matching rooms found.</div>';
+    return;
+  }
+  
+  filtered.forEach(r => {
+    const preview = r.tags ? r.tags + ' · ' + (r.description||'') : r.description||'';
+    const item = buildChatItem({avatar:'🏠', name:r.name, preview, time:'', unread:0});
+    item.addEventListener('click',()=>openConv(r));
+    if (currentChat?.convId===r.id) item.classList.add('active');
+    list.appendChild(item);
+  });
 }
