@@ -83,7 +83,7 @@ export default function DiscoverPage() {
               className="glass flex flex-col gap-3 rounded-2xl p-4 transition hover:shadow-glow"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-brand/25 text-primary-soft">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary-soft">
                   {chat.avatarUrl ? (
                     <img src={chat.avatarUrl} alt="" className="h-full w-full rounded-2xl object-cover" />
                   ) : chat.type === "CHANNEL" ? (

@@ -22,7 +22,11 @@ const envSchema = z.object({
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
 
-  COOKIE_SECURE: z.coerce.boolean().default(false),
+  // Note: z.coerce.boolean() would turn the string "false" into true.
+  COOKIE_SECURE: z
+    .string()
+    .default("false")
+    .transform((v) => ["true", "1", "yes"].includes(v.toLowerCase())),
 });
 
 const parsed = envSchema.safeParse(process.env);

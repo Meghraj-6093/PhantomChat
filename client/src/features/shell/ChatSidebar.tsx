@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, Search, Hash, Megaphone, MessagesSquare, Ghost } from "lucide-react";
+import { Plus, Search, Hash, Megaphone, Ghost } from "lucide-react";
 import { useChats } from "@/hooks/useChats";
 import { useAuthStore } from "@/stores/authStore";
 import { useChatStore } from "@/stores/chatStore";
@@ -145,7 +145,7 @@ function ChatRow({ chat, index, myUserId }: { chat: Chat; index: number; myUserI
             status={dmUser.status}
           />
         ) : (
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-brand/25 text-primary-soft ring-1 ring-line">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary-soft ring-1 ring-line">
             {chat.avatarUrl ? (
               <img src={chat.avatarUrl} alt="" className="h-full w-full rounded-full object-cover" />
             ) : chat.type === "CHANNEL" ? (
@@ -168,7 +168,7 @@ function ChatRow({ chat, index, myUserId }: { chat: Chat; index: number; myUserI
               {preview}
             </span>
             {chat.unreadCount > 0 && (
-              <span className="flex h-4.5 min-w-[18px] shrink-0 items-center justify-center rounded-full bg-gradient-brand px-1.5 py-0.5 text-[10px] font-bold text-white">
+              <span className="flex min-w-[18px] shrink-0 items-center justify-center rounded-full bg-gradient-brand px-1.5 py-0.5 text-[10px] font-bold text-white">
                 {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
               </span>
             )}

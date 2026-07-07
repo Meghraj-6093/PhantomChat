@@ -6,10 +6,11 @@ import { cn } from "@/lib/utils";
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "success" | "outline";
 type Size = "sm" | "md" | "lg" | "icon";
 
-interface ButtonProps extends HTMLMotionProps<"button"> {
+interface ButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
   variant?: Variant;
   size?: Size;
   loading?: boolean;
+  children?: React.ReactNode;
 }
 
 const variants: Record<Variant, string> = {

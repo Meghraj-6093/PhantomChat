@@ -84,7 +84,7 @@ export default function ChatPage() {
                 status={dmUser.status}
               />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-brand/25 text-primary-soft ring-1 ring-line">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary-soft ring-1 ring-line">
                 {chat.type === "CHANNEL" ? <Megaphone className="h-5 w-5" /> : <Hash className="h-5 w-5" />}
               </div>
             ))}

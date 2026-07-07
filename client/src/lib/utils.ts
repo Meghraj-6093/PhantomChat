@@ -57,10 +57,10 @@ export function chatDisplayName(
   return other?.user.displayName ?? "Direct message";
 }
 
-export function chatAvatarUser(
-  chat: { type: string; avatarUrl?: string | null; members: Array<{ userId: string; user: { avatarUrl: string | null; displayName: string; status?: string } }> },
+export function chatAvatarUser<T>(
+  chat: { type: string; members: Array<{ userId: string; user: T }> },
   myUserId: string | undefined
-) {
+): T | null {
   if (chat.type !== "DM") return null;
   return chat.members.find((m) => m.userId !== myUserId)?.user ?? null;
 }
