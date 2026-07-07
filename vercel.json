@@ -1,9 +1,9 @@
 {
   "framework": null,
-  "installCommand": "npm install --prefix client",
+  "installCommand": "npm install --prefix client && npm install --prefix server && npm run prisma:generate --prefix server",
   "buildCommand": "npm run build --prefix client",
   "outputDirectory": "client/dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
