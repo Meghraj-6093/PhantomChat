@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html.light {
+  color-scheme: light;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background font-sans text-slate-100 antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  html.light body {
+    @apply bg-slate-100 text-slate-900;
+  }
+
+  ::selection {
+    @apply bg-primary/40;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  /* Frosted glass card */
+  .glass {
+    @apply border border-line bg-card/60 shadow-glass backdrop-blur-xl;
+  }
+  html.light .glass {
+    @apply border-slate-200 bg-white/70;
+  }
+
+  .glass-strong {
+    @apply border border-line bg-card/85 shadow-glass backdrop-blur-2xl;
+  }
+  html.light .glass-strong {
+    @apply border-slate-200 bg-white/90;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-brand bg-clip-text text-transparent;
+  }
+
+  .skeleton {
+    @apply animate-shimmer rounded-lg bg-slate-700/30;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(148, 163, 184, 0.12) 50%,
+      transparent 100%
+    );
+    background-size: 400px 100%;
+    background-repeat: no-repeat;
+  }
+
+  .input-base {
+    @apply w-full rounded-xl border border-line bg-background/60 px-4 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-muted/60 focus:border-primary/60 focus:ring-2 focus:ring-primary/25;
+  }
+  html.light .input-base {
+    @apply bg-white text-slate-900;
+  }
+
+  /* Markdown message body */
+  .prose-chat :where(p) { @apply my-0.5 leading-relaxed; }
+  .prose-chat :where(a) { @apply text-primary-soft underline underline-offset-2 hover:text-accent-soft; }
+  .prose-chat :where(code):not(pre code) {
+    @apply rounded bg-slate-700/40 px-1.5 py-0.5 font-mono text-[0.85em] text-accent-soft;
+  }
+  .prose-chat :where(pre) {
+    @apply my-1.5 overflow-x-auto rounded-xl border border-line bg-[#0b1020] p-3 font-mono text-[13px] leading-relaxed;
+  }
+  .prose-chat :where(strong) { @apply font-semibold; }
+  .prose-chat :where(blockquote) { @apply my-1 border-l-2 border-primary/50 pl-3 text-muted; }
+  .prose-chat .mention {
+    @apply rounded bg-primary/20 px-1 font-medium text-primary-soft;
+  }
+}
+
+@layer utilities {
+  .pt-safe { padding-top: var(--safe-top); }
+  .pb-safe { padding-bottom: var(--safe-bottom); }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+}
