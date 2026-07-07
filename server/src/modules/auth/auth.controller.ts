@@ -14,17 +14,23 @@ function meta(req: Request) {
 }
 
 function setRefreshCookie(res: Response, token: string) {
+  const secure = env.COOKIE_SECURE || isProd;
   res.cookie(REFRESH_COOKIE, token, {
     httpOnly: true,
-    secure: env.COOKIE_SECURE || isProd,
-    sameSite: "lax",
+    secure,
+    // Cross-site fetch()/XHR only carries cookies when SameSite=None (and thus
+    // requires Secure). Lax works for same-origin/subdomain dev, but the
+    // moment the client (e.g. Vercel) and API (e.g. Railway) are on different
+    // domains, Lax cookies are dropped on POST/fetch and refresh silently fails.
+    sameSite: secure ? "none" : "lax",
     path: "/api/auth",
     maxAge: env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000,
   });
 }
 
 function clearRefreshCookie(res: Response) {
-  res.clearCookie(REFRESH_COOKIE, { path: "/api/auth" });
+  const secure = env.COOKIE_SECURE || isProd;
+  res.clearCookie(REFRESH_COOKIE, { path: "/api/auth", secure, sameSite: secure ? "none" : "lax" });
 }
 
 export const register = asyncHandler(async (req, res) => {
