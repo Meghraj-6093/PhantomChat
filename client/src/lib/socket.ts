@@ -13,6 +13,15 @@ export function getSocket(): Socket | null {
   return socket;
 }
 
+/**
+ * True only when a live Socket.io connection is established. On serverless
+ * hosts (e.g. Vercel) there is no persistent socket server, so this stays
+ * false and the data hooks fall back to polling for near-real-time updates.
+ */
+export function isSocketLive(): boolean {
+  return socket?.connected === true;
+}
+
 export function connectSocket() {
   const token = useAuthStore.getState().accessToken;
   if (!token || socket?.connected) return socket;

@@ -8,7 +8,9 @@ import { useChatStore } from "@/stores/chatStore";
 import { useUiStore } from "@/stores/uiStore";
 import { Avatar } from "@/components/ui/Avatar";
 import { chatDisplayName, chatAvatarUser, cn, formatLastSeen } from "@/lib/utils";
-import { getSocket } from "@/lib/socket";
+import { getSocket, isSocketLive } from "@/lib/socket";
+import { api } from "@/lib/api";
+import { queryClient } from "@/lib/queryClient";
 import { MessageList } from "./MessageList";
 import { Composer } from "./Composer";
 import { RightPanel } from "./RightPanel";
@@ -30,8 +32,27 @@ export default function ChatPage() {
 
   useEffect(() => {
     setActiveChat(chatId ?? null);
-    if (chatId) getSocket()?.emit("chat:read", chatId);
-    return () => setActiveChat(null);
+    if (!chatId) return () => setActiveChat(null);
+
+    getSocket()?.emit("chat:read", chatId);
+
+    // No live socket (serverless): clear unread via REST. Re-mark on an
+    // interval so messages that arrive while the chat stays open keep
+    // advancing lastReadAt — otherwise the badge would reappear on leaving.
+    let markInterval: ReturnType<typeof setInterval> | undefined;
+    if (!isSocketLive()) {
+      const markRead = () =>
+        api(`/chats/${chatId}/read`, { method: "POST" })
+          .then(() => queryClient.invalidateQueries({ queryKey: ["chats"] }))
+          .catch(() => {});
+      markRead();
+      markInterval = setInterval(markRead, 5000);
+    }
+
+    return () => {
+      if (markInterval) clearInterval(markInterval);
+      setActiveChat(null);
+    };
   }, [chatId, setActiveChat]);
 
   const dmUser = chat ? chatAvatarUser(chat, user?.id) : null;

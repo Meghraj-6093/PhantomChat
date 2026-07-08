@@ -106,6 +106,7 @@ export function ChatSidebar() {
 
 function ChatRow({ chat, index, myUserId }: { chat: Chat; index: number; myUserId?: string }) {
   const typing = useChatStore((s) => s.typing[chat.id] ?? []);
+  const isActive = useChatStore((s) => s.activeChatId === chat.id);
   const name = chatDisplayName(chat, myUserId);
   const dmUser = chatAvatarUser(chat, myUserId);
   const last = chat.lastMessage;
@@ -167,7 +168,7 @@ function ChatRow({ chat, index, myUserId }: { chat: Chat; index: number; myUserI
             <span className={cn("truncate text-xs", typing.length ? "italic text-primary-soft" : "text-muted")}>
               {preview}
             </span>
-            {chat.unreadCount > 0 && (
+            {chat.unreadCount > 0 && !isActive && (
               <span className="flex min-w-[18px] shrink-0 items-center justify-center rounded-full bg-gradient-brand px-1.5 py-0.5 text-[10px] font-bold text-white">
                 {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
               </span>

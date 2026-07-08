@@ -1,12 +1,17 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
+import { isSocketLive } from "@/lib/socket";
 import type { Chat } from "@/types";
 
 export function useChats() {
   return useQuery({
     queryKey: ["chats"],
     queryFn: () => api<Chat[]>("/chats"),
+    // Without a live socket, poll so unread badges and last-message previews
+    // stay current. Disabled automatically once a socket connects.
+    refetchInterval: () => (isSocketLive() ? false : 8000),
+    refetchIntervalInBackground: false,
   });
 }
 

@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
-import { getSocket, replaceMessageInCache, upsertMessageInCache } from "@/lib/socket";
+import { getSocket, isSocketLive, replaceMessageInCache, upsertMessageInCache } from "@/lib/socket";
 import { useAuthStore } from "@/stores/authStore";
 import type { Attachment, Message, MessageType, Paginated } from "@/types";
 
@@ -18,6 +18,11 @@ export function useMessages(chatId: string | undefined, threadRootId: string | n
     getNextPageParam: (last) => last.nextCursor,
     enabled: !!chatId,
     staleTime: 60_000,
+    // When there is no live socket (e.g. serverless deploy), poll the open
+    // conversation so new messages arrive without a manual refresh. Polling
+    // stops automatically once a real socket connects.
+    refetchInterval: () => (isSocketLive() ? false : 4000),
+    refetchIntervalInBackground: false,
   });
 }
 

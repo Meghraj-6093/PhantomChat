@@ -8,7 +8,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { renderMarkdown } from "@/lib/markdown";
 import { cn, formatMessageTime, formatBytes, formatDuration } from "@/lib/utils";
 import { useChatStore } from "@/stores/chatStore";
-import { useDeleteMessage, usePin, useToggleReaction } from "@/hooks/useMessages";
+import { useDeleteMessage, usePin, useToggleReaction, useSendMessage } from "@/hooks/useMessages";
+import { replaceMessageInCache } from "@/lib/socket";
 import { useAuthStore } from "@/stores/authStore";
 import { ForwardModal } from "./ForwardModal";
 import type { Chat, Message } from "@/types";
@@ -35,7 +36,21 @@ export const MessageBubble = memo(function MessageBubble({
   const toggleReaction = useToggleReaction();
   const deleteMessage = useDeleteMessage();
   const pinMutation = usePin();
+  const sendMessage = useSendMessage();
   const user = useAuthStore((s) => s.user);
+
+  const retrySend = () => {
+    // Drop the failed placeholder and re-send with the same payload.
+    replaceMessageInCache(message.chatId, message.threadRootId ?? null, (m) => m.id === message.id, null);
+    sendMessage.mutate({
+      chatId: message.chatId,
+      content: message.content ?? undefined,
+      type: message.type,
+      replyToId: message.replyToId ?? undefined,
+      threadRootId: message.threadRootId ?? undefined,
+      attachments: message.attachments,
+    });
+  };
 
   const canModerate = chat?.myRole && chat.myRole !== "MEMBER";
   const isThreadReply = !!message.threadRootId;
@@ -132,6 +147,17 @@ export const MessageBubble = memo(function MessageBubble({
               ))}
           </span>
         </div>
+
+        {/* Failed send — offer a retry */}
+        {isOwn && message.failed && (
+          <button
+            onClick={retrySend}
+            className="mt-1 flex items-center gap-1 text-[11px] font-medium text-red-300 hover:text-red-200"
+          >
+            <AlertCircle className="h-3 w-3" />
+            Failed to send · Tap to retry
+          </button>
+        )}
 
         {/* Reactions */}
         {message.reactions.length > 0 && (
