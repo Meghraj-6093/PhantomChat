@@ -3,7 +3,7 @@ import { Ghost } from "lucide-react";
 
 export default function AuthLayout() {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background bg-gradient-aurora px-4 py-10">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background bg-gradient-aurora px-4 py-10 pl-safe pr-safe">
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 flex flex-col items-center gap-3 animate-fade-up">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-brand shadow-glow">

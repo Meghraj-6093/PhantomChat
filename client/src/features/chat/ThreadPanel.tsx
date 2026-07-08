@@ -38,7 +38,7 @@ export function ThreadPanel({ chatId }: { chatId: string }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15, ease: "easeOut" }}
-      className="glass-strong fixed inset-y-0 right-0 z-40 flex w-full max-w-sm flex-col border-l border-line pt-safe lg:static lg:z-auto lg:w-[320px]"
+      className="glass-strong fixed inset-y-0 right-0 z-40 flex w-full max-w-sm flex-col border-l border-line pt-safe pr-safe lg:static lg:z-auto lg:w-[320px]"
     >
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <h3 className="flex items-center gap-2 text-sm font-bold">

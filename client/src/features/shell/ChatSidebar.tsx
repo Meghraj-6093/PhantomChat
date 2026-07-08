@@ -129,7 +129,7 @@ function ChatRow({ chat, myUserId }: { chat: Chat; myUserId?: string }) {
         to={`/chat/${chat.id}`}
         className={({ isActive }) =>
           cn(
-            "flex items-center gap-3 rounded-xl p-2.5 transition",
+            "flex items-center gap-3 rounded-xl p-2.5 transition-all active:scale-[0.98]",
             isActive ? "bg-primary/15" : "hover:bg-slate-700/25"
           )
         }

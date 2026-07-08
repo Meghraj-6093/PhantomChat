@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   User, Palette, ShieldCheck, MonitorSmartphone, Menu, Moon, Sun, Check, LogOut, KeyRound,
 } from "lucide-react";
@@ -41,11 +42,18 @@ export default function SettingsPage() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition",
-              tab === t.id ? "bg-primary/20 text-primary-soft" : "text-muted hover:bg-slate-700/30 hover:text-slate-100"
+              "relative shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors active:scale-95",
+              tab === t.id ? "text-primary-soft" : "text-muted hover:bg-slate-700/30 hover:text-slate-100"
             )}
           >
-            {t.icon} {t.label}
+            {tab === t.id && (
+              <motion.span
+                layoutId="settings-tab-pill"
+                className="absolute inset-0 rounded-full bg-primary/20"
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              />
+            )}
+            <span className="relative flex items-center gap-1.5">{t.icon} {t.label}</span>
           </button>
         ))}
       </div>

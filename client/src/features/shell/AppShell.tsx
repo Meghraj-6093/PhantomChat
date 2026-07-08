@@ -19,7 +19,7 @@ export default function AppShell() {
   const isChatView = location.pathname.startsWith("/chat/") || location.pathname === "/";
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden bg-background bg-gradient-aurora">
+    <div className="flex h-dvh overflow-hidden bg-background bg-gradient-aurora pl-safe pr-safe">
       {/* Desktop nav rail */}
       <div className="hidden md:block">
         <NavRail />
@@ -42,7 +42,7 @@ export default function AppShell() {
               onClick={() => toggleSidebar(false)}
             />
             <motion.div
-              className="fixed inset-y-0 left-0 z-50 flex w-[85vw] max-w-[340px] md:hidden"
+              className="fixed inset-y-0 left-0 z-50 flex w-[85vw] max-w-[340px] pl-safe md:hidden"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}

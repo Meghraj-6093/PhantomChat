@@ -2,7 +2,7 @@ import { Ghost } from "lucide-react";
 
 export function SplashScreen() {
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-6 bg-background bg-gradient-aurora">
+    <div className="flex h-dvh flex-col items-center justify-center gap-6 bg-background bg-gradient-aurora">
       <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-brand shadow-glow animate-fade-up">
         <Ghost className="h-10 w-10 text-white" />
       </div>

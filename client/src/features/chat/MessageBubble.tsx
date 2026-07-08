@@ -208,7 +208,7 @@ export const MessageBubble = memo(function MessageBubble({
                 key={emoji}
                 onClick={() => toggleReaction.mutate({ chatId: message.chatId, messageId: message.id, emoji })}
                 className={cn(
-                  "flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition",
+                  "flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-all active:scale-90",
                   mine(user?.id)
                     ? "border-primary/60 bg-primary/20 text-primary-soft"
                     : "border-line bg-card/60 text-muted hover:border-primary/40"
@@ -244,7 +244,7 @@ export const MessageBubble = memo(function MessageBubble({
             QUICK_EMOJIS.map((e) => (
               <button
                 key={e}
-                className="rounded-lg px-1.5 py-0.5 text-base transition hover:scale-125"
+                className="rounded-lg px-1.5 py-0.5 text-base transition-transform hover:scale-125 active:scale-90"
                 onClick={() => {
                   toggleReaction.mutate({ chatId: message.chatId, messageId: message.id, emoji: e });
                   setPickerOpen(false);
@@ -321,7 +321,7 @@ function ActionIcon({
       title={title}
       onClick={onClick}
       className={cn(
-        "rounded-lg p-1.5 transition",
+        "rounded-lg p-1.5 transition-all active:scale-90",
         danger ? "text-muted hover:bg-danger/20 hover:text-danger" : "text-muted hover:bg-slate-700/40 hover:text-slate-100"
       )}
     >

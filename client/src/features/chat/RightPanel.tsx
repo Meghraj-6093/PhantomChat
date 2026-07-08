@@ -34,7 +34,7 @@ export function RightPanel({ chat }: { chat: Chat }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15, ease: "easeOut" }}
-      className="glass-strong fixed inset-y-0 right-0 z-40 flex w-full max-w-sm flex-col border-l border-line pt-safe lg:static lg:z-auto lg:w-[320px]"
+      className="glass-strong fixed inset-y-0 right-0 z-40 flex w-full max-w-sm flex-col border-l border-line pt-safe pr-safe lg:static lg:z-auto lg:w-[320px]"
     >
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <h3 className="text-sm font-bold">Conversation info</h3>
@@ -49,12 +49,19 @@ export function RightPanel({ chat }: { chat: Chat }) {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition",
-              tab === t.id ? "border-b-2 border-primary text-primary-soft" : "text-muted hover:text-slate-100"
+              "relative flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors active:scale-95",
+              tab === t.id ? "text-primary-soft" : "text-muted hover:text-slate-100"
             )}
           >
             {t.icon}
             {t.label}
+            {tab === t.id && (
+              <motion.span
+                layoutId="right-panel-tab-indicator"
+                className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-primary"
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              />
+            )}
           </button>
         ))}
       </div>

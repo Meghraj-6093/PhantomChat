@@ -6,6 +6,8 @@
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 html.light {
@@ -17,6 +19,9 @@ html.light {
   body,
   #root {
     height: 100%;
+    /* Safety net: nothing in the layout should need horizontal scroll — this
+       just guarantees a stray wide element can't force one on any device. */
+    overflow-x: hidden;
   }
 
   body {
@@ -102,11 +107,49 @@ html.light {
   .prose-chat .mention {
     @apply rounded bg-primary/20 px-1 font-medium text-primary-soft;
   }
+
+  /*
+   * Rotating accent border — a thin highlight that continuously traces the
+   * element's perimeter. Used sparingly (primary button while loading, the
+   * active call ring) as the one "alive" touch against an otherwise static
+   * UI. Degrades gracefully to a plain border on browsers without
+   * @property/conic-gradient support.
+   */
+  .spin-border {
+    position: relative;
+    isolation: isolate;
+  }
+  .spin-border::before {
+    content: "";
+    position: absolute;
+    inset: -1.5px;
+    z-index: -1;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: conic-gradient(from var(--spin-angle, 0deg), transparent 0%, theme("colors.primary.soft") 10%, theme("colors.primary.DEFAULT") 20%, transparent 32%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: spin-border-rotate 1.8s linear infinite;
+    pointer-events: none;
+  }
+}
+
+@property --spin-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes spin-border-rotate {
+  to { --spin-angle: 360deg; }
 }
 
 @layer utilities {
   .pt-safe { padding-top: var(--safe-top); }
   .pb-safe { padding-bottom: var(--safe-bottom); }
+  .pl-safe { padding-left: var(--safe-left); }
+  .pr-safe { padding-right: var(--safe-right); }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { scrollbar-width: none; }
 }

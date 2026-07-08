@@ -21,7 +21,8 @@ export function MobileNav() {
       <motion.nav
         initial={{ y: 64 }}
         animate={{ y: 0 }}
-        className="glass-strong fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line pb-safe"
+        transition={{ duration: 0.15, ease: "easeOut" }}
+        className="glass-strong fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line pb-safe pl-safe pr-safe"
       >
         <NavLink to="/" className={itemClass} end>
           <MessageSquare className="h-5 w-5" />

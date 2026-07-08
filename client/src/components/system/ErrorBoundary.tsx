@@ -21,7 +21,7 @@ export class ErrorBoundary extends Component<Props, State> {
   override render() {
     if (this.state.error) {
       return (
-        <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
+        <div className="flex h-dvh flex-col items-center justify-center gap-4 overflow-y-auto bg-background px-6 py-8 text-center">
           <div className="text-6xl">👻</div>
           <h1 className="text-2xl font-bold text-slate-100">Something went wrong</h1>
           <p className="max-w-md text-sm text-muted">

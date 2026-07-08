@@ -52,7 +52,7 @@ export function EmojiPicker({ onPick }: { onPick: (emoji: string) => void }) {
             onClick={() => setCategory(i)}
             title={c.name}
             className={cn(
-              "flex-1 rounded-lg py-1 text-sm transition",
+              "flex-1 rounded-lg py-1 text-sm transition-all active:scale-90",
               i === category ? "bg-primary/20" : "opacity-50 hover:opacity-100"
             )}
           >
@@ -65,7 +65,7 @@ export function EmojiPicker({ onPick }: { onPick: (emoji: string) => void }) {
           <button
             key={e}
             onClick={() => onPick(e)}
-            className="rounded-lg p-1 text-lg transition hover:scale-125 hover:bg-slate-700/30"
+            className="rounded-lg p-1 text-lg transition-transform hover:scale-125 hover:bg-slate-700/30 active:scale-90"
           >
             {e}
           </button>

@@ -34,7 +34,7 @@ export default function OAuthCallbackPage() {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
+      <div className="flex h-dvh flex-col items-center justify-center gap-4 overflow-y-auto bg-background px-6 py-8 text-center">
         <p className="text-lg font-semibold text-danger">Sign-in failed</p>
         <p className="text-sm text-muted">{error}</p>
         <button

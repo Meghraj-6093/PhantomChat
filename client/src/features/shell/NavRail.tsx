@@ -32,7 +32,7 @@ export function NavRail() {
 
   const itemClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      "relative flex h-11 w-11 items-center justify-center rounded-2xl transition-all",
+      "relative flex h-11 w-11 items-center justify-center rounded-2xl transition-all active:scale-90",
       isActive
         ? "bg-gradient-brand text-white shadow-glow"
         : "text-muted hover:bg-slate-700/40 hover:text-slate-100"
@@ -63,7 +63,7 @@ export function NavRail() {
 
       <button
         onClick={() => setNotifOpen(true)}
-        className="relative flex h-11 w-11 items-center justify-center rounded-2xl text-muted transition hover:bg-slate-700/40 hover:text-slate-100"
+        className="relative flex h-11 w-11 items-center justify-center rounded-2xl text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90"
         title="Notifications"
       >
         <Bell className="h-5 w-5" />
@@ -76,7 +76,7 @@ export function NavRail() {
 
       <button
         onClick={() => setCommandPalette(true)}
-        className="flex h-11 w-11 items-center justify-center rounded-2xl text-muted transition hover:bg-slate-700/40 hover:text-slate-100"
+        className="flex h-11 w-11 items-center justify-center rounded-2xl text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90"
         title="Search (Ctrl+K)"
       >
         <Search className="h-5 w-5" />
@@ -96,7 +96,7 @@ export function NavRail() {
 
       <button
         onClick={handleLogout}
-        className="flex h-11 w-11 items-center justify-center rounded-2xl text-muted transition hover:bg-danger/20 hover:text-danger"
+        className="flex h-11 w-11 items-center justify-center rounded-2xl text-muted transition-all hover:bg-danger/20 hover:text-danger active:scale-90"
         title="Log out"
       >
         <LogOut className="h-5 w-5" />

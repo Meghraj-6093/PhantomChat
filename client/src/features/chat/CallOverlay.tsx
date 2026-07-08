@@ -31,7 +31,7 @@ export function CallOverlay({ call }: { call: CallSession }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[80] flex flex-col bg-background/95 backdrop-blur-xl"
+        className="fixed inset-0 z-[80] flex flex-col bg-background/95 pl-safe pr-safe backdrop-blur-xl"
       >
         {/* Remote media */}
         <div ref={stageRef} className="relative flex flex-1 items-center justify-center">
@@ -136,7 +136,7 @@ function CallButton({
       <button
         onClick={onClick}
         className={cn(
-          "flex h-14 w-14 items-center justify-center rounded-full text-white shadow-soft",
+          "flex h-14 w-14 items-center justify-center rounded-full text-white shadow-soft transition-transform active:scale-90",
           pulse && "animate-pulse",
           color
         )}

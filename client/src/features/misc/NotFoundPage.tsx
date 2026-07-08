@@ -3,7 +3,7 @@ import { Ghost, Home } from "lucide-react";
 
 export default function NotFoundPage() {
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-6 bg-background bg-gradient-aurora px-6 text-center">
+    <div className="flex h-dvh flex-col items-center justify-center gap-6 overflow-y-auto bg-background bg-gradient-aurora px-6 py-8 text-center">
       <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-brand shadow-glow">
         <Ghost className="h-12 w-12 text-white" />
       </div>

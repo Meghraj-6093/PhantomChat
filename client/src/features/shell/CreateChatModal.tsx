@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Hash, Megaphone, MessageSquare, Search } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -77,11 +78,18 @@ export function CreateChatModal({
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition",
-              tab === t.id ? "bg-gradient-brand text-white shadow-glow" : "text-muted hover:text-slate-100"
+              "relative flex-1 rounded-lg py-2 text-xs font-medium transition-colors active:scale-95",
+              tab === t.id ? "text-white" : "text-muted hover:text-slate-100"
             )}
           >
-            {t.icon} {t.label}
+            {tab === t.id && (
+              <motion.span
+                layoutId="create-chat-tab-pill"
+                className="absolute inset-0 rounded-lg bg-gradient-brand shadow-glow"
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              />
+            )}
+            <span className="relative flex items-center justify-center gap-1.5">{t.icon} {t.label}</span>
           </button>
         ))}
       </div>

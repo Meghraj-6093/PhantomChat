@@ -42,7 +42,7 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
             onClick={onClose}
           />
           <motion.aside
-            className="glass-strong fixed bottom-0 right-0 top-0 z-50 flex w-full max-w-sm flex-col pt-safe"
+            className="glass-strong fixed bottom-0 right-0 top-0 z-50 flex w-full max-w-sm flex-col pt-safe pr-safe"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}

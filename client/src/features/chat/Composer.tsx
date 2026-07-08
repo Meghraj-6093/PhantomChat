@@ -272,7 +272,7 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="rounded-xl p-2.5 text-muted transition hover:bg-slate-700/40 hover:text-slate-100"
+            className="rounded-xl p-2.5 text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90"
             title="Attach files"
           >
             <Paperclip className="h-5 w-5" />
@@ -285,7 +285,7 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
                 fileInputRef.current.accept = "";
               }
             }}
-            className="hidden rounded-xl p-2.5 text-muted transition hover:bg-slate-700/40 hover:text-slate-100 sm:block"
+            className="hidden rounded-xl p-2.5 text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90 sm:block"
             title="Photos & videos"
           >
             <ImagePlus className="h-5 w-5" />
@@ -307,7 +307,7 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
             <button
               onClick={() => setEmojiOpen((o) => !o)}
               className={cn(
-                "absolute bottom-2.5 right-2.5 rounded-lg p-1 transition",
+                "absolute bottom-2.5 right-2.5 rounded-lg p-1 transition-all active:scale-90",
                 emojiOpen ? "text-primary-soft" : "text-muted hover:text-slate-100"
               )}
               title="Emoji"
@@ -318,7 +318,7 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
 
           <button
             onClick={() => setScheduleOpen(true)}
-            className="hidden rounded-xl p-2.5 text-muted transition hover:bg-slate-700/40 hover:text-slate-100 sm:block"
+            className="hidden rounded-xl p-2.5 text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90 sm:block"
             title="Schedule message"
           >
             <CalendarClock className="h-5 w-5" />
@@ -328,7 +328,10 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
             <button
               onClick={() => doSend()}
               disabled={uploading}
-              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-brand text-white shadow-glow disabled:opacity-60"
+              className={cn(
+                "flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-brand text-white shadow-glow transition-transform active:scale-90 disabled:opacity-60",
+                uploading && "spin-border"
+              )}
               title="Send"
             >
               {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
@@ -336,7 +339,7 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
           ) : (
             <button
               onClick={startRecording}
-              className="flex h-11 w-11 items-center justify-center rounded-2xl border border-line text-muted transition hover:text-slate-100"
+              className="flex h-11 w-11 items-center justify-center rounded-2xl border border-line text-muted transition-all hover:text-slate-100 active:scale-90"
               title="Voice message"
             >
               <Mic className="h-5 w-5" />
