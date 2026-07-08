@@ -2,8 +2,9 @@ import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 import { getSocket, isSocketLive, replaceMessageInCache, upsertMessageInCache } from "@/lib/socket";
+import { encryptForChat, cachePlaintext } from "@/lib/encryption";
 import { useAuthStore } from "@/stores/authStore";
-import type { Attachment, Message, MessageType, Paginated } from "@/types";
+import type { Attachment, Chat, Message, MessageType, Paginated } from "@/types";
 
 export function useMessages(chatId: string | undefined, threadRootId: string | null = null) {
   return useInfiniteQuery({
@@ -64,9 +65,23 @@ export function useSendMessage() {
       };
       if (!args.scheduledFor) upsertMessageInCache(optimistic);
 
+      // Encrypt the text for the chat's members when the conversation is
+      // encryptable and our keys are ready; otherwise send as plaintext.
+      let outContent = args.content;
+      let isEncrypted = false;
+      if (args.content) {
+        const chat = queryClient.getQueryData<Chat>(["chat", args.chatId]);
+        if (chat) {
+          const result = await encryptForChat(chat, args.content);
+          outContent = result.content;
+          isEncrypted = result.isEncrypted;
+        }
+      }
+
       const payload = {
         chatId: args.chatId,
-        content: args.content,
+        content: outContent,
+        isEncrypted,
         type: args.type,
         replyToId: args.replyToId,
         threadRootId: args.threadRootId ?? undefined,
@@ -75,6 +90,8 @@ export function useSendMessage() {
       };
 
       const finalize = (real: Message) => {
+        // We already hold the plaintext for our own encrypted message.
+        if (isEncrypted && args.content) cachePlaintext(real.id, args.content);
         replaceMessageInCache(args.chatId, args.threadRootId ?? null, (m) => m.id === tempId, real);
         // The socket broadcast may also have upserted the real id; drop dupes.
         queryClient.invalidateQueries({ queryKey: ["chats"] });
@@ -136,8 +153,19 @@ export function useSendMessage() {
 
 export function useEditMessage() {
   return useMutation({
-    mutationFn: ({ chatId, messageId, content }: { chatId: string; messageId: string; content: string }) =>
-      api<Message>(`/chats/${chatId}/messages/${messageId}`, { method: "PATCH", body: { content } }),
+    mutationFn: async ({ chatId, messageId, content }: { chatId: string; messageId: string; content: string }) => {
+      // Re-encrypt the edited text so the stored envelope stays valid.
+      let outContent = content;
+      const chat = queryClient.getQueryData<Chat>(["chat", chatId]);
+      const result = chat ? await encryptForChat(chat, content) : { content, isEncrypted: false };
+      outContent = result.content;
+      const message = await api<Message>(`/chats/${chatId}/messages/${messageId}`, {
+        method: "PATCH",
+        body: { content: outContent },
+      });
+      if (result.isEncrypted) cachePlaintext(message.id, content);
+      return message;
+    },
     onSuccess: (message) => upsertMessageInCache(message),
   });
 }

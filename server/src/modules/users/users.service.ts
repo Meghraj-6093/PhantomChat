@@ -43,6 +43,24 @@ export async function changePassword(userId: string, currentPassword: string, ne
   await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
 }
 
+/** Returns the caller's own E2EE key material (public key + wrapped backup). */
+export async function getMyKeys(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { publicKey: true, encryptedPrivateKey: true },
+  });
+  if (!user) throw ApiError.notFound("User not found");
+  return { publicKey: user.publicKey, encryptedPrivateKey: user.encryptedPrivateKey };
+}
+
+/** Publishes the caller's public key and passphrase-wrapped private-key backup. */
+export async function setMyKeys(userId: string, publicKey: string, encryptedPrivateKey: string) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { publicKey, encryptedPrivateKey },
+  });
+}
+
 export async function searchUsers(query: string, excludeUserId: string, limit = 20) {
   return prisma.user.findMany({
     where: {

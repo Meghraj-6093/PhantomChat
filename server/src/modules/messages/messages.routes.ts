@@ -7,7 +7,10 @@ import * as service from "./messages.service";
 
 const sendSchema = z.object({
   type: z.enum(["TEXT", "IMAGE", "VIDEO", "AUDIO", "FILE", "VOICE", "GIF", "STICKER"]).optional(),
-  content: z.string().max(4000).optional(),
+  // Plaintext is capped at 4000 chars; an encrypted envelope (ciphertext plus a
+  // wrapped key per group member) is larger, so allow more when isEncrypted.
+  content: z.string().max(60000).optional(),
+  isEncrypted: z.boolean().optional(),
   replyToId: z.string().optional(),
   threadRootId: z.string().optional(),
   attachmentIds: z.array(z.string()).max(5).optional(),
@@ -50,7 +53,7 @@ messagesRouter.get("/media", asyncHandler(async (req, res) => {
 
 messagesRouter.patch(
   "/:messageId",
-  validate({ body: z.object({ content: z.string().min(1).max(4000) }) }),
+  validate({ body: z.object({ content: z.string().min(1).max(60000) }) }),
   asyncHandler(async (req, res) => {
     res.json({
       success: true,

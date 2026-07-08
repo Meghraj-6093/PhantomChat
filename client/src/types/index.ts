@@ -17,12 +17,16 @@ export interface PublicUser {
   role: UserRole;
   lastSeenAt: string | null;
   createdAt: string;
+  /** Base64 ECDH public key for end-to-end encryption (null until set up). */
+  publicKey: string | null;
 }
 
 export interface PrivateUser extends PublicUser {
   email: string;
   emailVerified: boolean;
   twoFactorEnabled: boolean;
+  /** Whether a passphrase-wrapped private-key backup exists on the server. */
+  hasKeyBackup: boolean;
 }
 
 export interface Attachment {
@@ -51,6 +55,8 @@ export interface Message {
   sender: PublicUser | null;
   type: MessageType;
   content: string | null;
+  /** True when `content` holds an E2EE ciphertext envelope. */
+  isEncrypted?: boolean;
   replyToId: string | null;
   replyTo: (Pick<Message, "id" | "content" | "type"> & {
     sender: Pick<PublicUser, "id" | "username" | "displayName" | "avatarUrl"> | null;

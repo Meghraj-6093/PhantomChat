@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { KeyRound, MailCheck, ShieldCheck, Copy } from "lucide-react";
 import { api } from "@/lib/api";
+import { rewrapBackup } from "@/lib/encryption";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -69,6 +70,8 @@ function PasswordChange() {
     setMsg(null);
     try {
       await changePassword.mutateAsync({ currentPassword: current, newPassword: next });
+      // Keep the encrypted key backup restorable with the new password.
+      await rewrapBackup(next).catch(() => {});
       setMsg({ ok: true, text: "Password updated ✓" });
       setCurrent("");
       setNext("");

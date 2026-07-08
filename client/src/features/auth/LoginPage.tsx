@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { AtSign, Lock, ShieldCheck } from "lucide-react";
 import { api, ApiRequestError } from "@/lib/api";
+import { initEncryption } from "@/lib/encryption";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -38,6 +39,8 @@ export default function LoginPage() {
         body: { ...values, totp: values.totp || undefined },
       });
       setAuth(data.user, data.accessToken);
+      // Unlock/restore E2EE keys using the account password as the passphrase.
+      initEncryption(data.user, values.password).catch(() => {});
       const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/";
       navigate(from, { replace: true });
     } catch (err) {

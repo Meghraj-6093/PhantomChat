@@ -21,6 +21,7 @@ export const messageInclude = {
 export interface SendMessageInput {
   type?: MessageType;
   content?: string;
+  isEncrypted?: boolean;
   replyToId?: string;
   threadRootId?: string;
   attachmentIds?: string[];
@@ -43,9 +44,12 @@ export async function sendMessage(chatId: string, senderId: string, input: SendM
     if (!acquired) throw ApiError.tooMany(`Slow mode: wait ${member.chat.slowModeSeconds}s between messages`);
   }
 
-  const content = input.content ? sanitizeText(input.content) : undefined;
+  // Encrypted content is an opaque ciphertext envelope: the server can't (and
+  // must not try to) sanitize, spam-check, or scan it for mentions.
+  const encrypted = !!input.isEncrypted;
+  const content = input.content ? (encrypted ? input.content : sanitizeText(input.content)) : undefined;
   if (!content && !input.attachmentIds?.length) throw ApiError.badRequest("Message is empty");
-  if (content && looksLikeSpam(content)) throw ApiError.badRequest("Message flagged as spam");
+  if (!encrypted && content && looksLikeSpam(content)) throw ApiError.badRequest("Message flagged as spam");
 
   if (input.replyToId) {
     const target = await prisma.message.findFirst({ where: { id: input.replyToId, chatId } });
@@ -67,6 +71,7 @@ export async function sendMessage(chatId: string, senderId: string, input: SendM
       senderId,
       type: input.type ?? "TEXT",
       content,
+      isEncrypted: encrypted,
       replyToId: input.replyToId,
       threadRootId: input.threadRootId,
       scheduledFor,
@@ -82,7 +87,8 @@ export async function sendMessage(chatId: string, senderId: string, input: SendM
 
   if (!scheduledFor) {
     emitToChat(chatId, "message:new", message);
-    await notifyMentions(chatId, message.id, senderId, content);
+    // Mentions can't be parsed from ciphertext; skip for encrypted messages.
+    if (!encrypted) await notifyMentions(chatId, message.id, senderId, content);
   }
   return message;
 }
@@ -171,7 +177,8 @@ export async function editMessage(chatId: string, messageId: string, userId: str
 
   const updated = await prisma.message.update({
     where: { id: messageId },
-    data: { content: sanitizeText(content), isEdited: true },
+    // Preserve the ciphertext envelope untouched for encrypted messages.
+    data: { content: message.isEncrypted ? content : sanitizeText(content), isEdited: true },
     include: messageInclude,
   });
   emitToChat(chatId, "message:updated", updated);
@@ -279,6 +286,9 @@ export async function listMedia(chatId: string, userId: string, limit = 60) {
 export async function forwardMessage(userId: string, messageId: string, targetChatIds: string[]) {
   const source = await prisma.message.findUnique({ where: { id: messageId }, include: { attachments: true } });
   if (!source || source.isDeleted) throw ApiError.notFound("Message not found");
+  // The envelope's keys are wrapped to the source chat's members only, so a
+  // forwarded copy would be undecryptable in the target chat.
+  if (source.isEncrypted) throw ApiError.badRequest("Encrypted messages can't be forwarded");
   await assertMember(source.chatId, userId);
 
   const results = [];

@@ -43,6 +43,12 @@ model User {
   lastSeenAt    DateTime?
   isBanned      Boolean    @default(false)
   banReason     String?
+  // End-to-end encryption. `publicKey` is the user's ECDH P-256 public key
+  // (base64 SPKI) that peers encrypt to. `encryptedPrivateKey` is the private
+  // key wrapped with a key derived from the user's passphrase (opaque JSON);
+  // the server never sees the passphrase or the unwrapped key.
+  publicKey           String? @db.Text
+  encryptedPrivateKey String? @db.Text
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -207,7 +213,12 @@ model Message {
   chatId      String
   senderId    String?
   type        MessageType @default(TEXT)
+  // For end-to-end encrypted messages `content` holds an opaque ciphertext
+  // envelope (base64 JSON: iv, ciphertext, and per-recipient wrapped keys)
+  // that only chat members can decrypt. `isEncrypted` marks such rows so the
+  // server and clients render a lock placeholder instead of the raw envelope.
   content     String?     @db.Text
+  isEncrypted Boolean     @default(false)
   replyToId   String?
   threadRootId String?
   isEdited    Boolean     @default(false)

@@ -4,9 +4,11 @@ import { AnimatePresence } from "framer-motion";
 import { useAuthStore } from "@/stores/authStore";
 import { refreshAccessToken, api } from "@/lib/api";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { initEncryption, resetEncryptionState } from "@/lib/encryption";
 import { SplashScreen } from "@/components/system/SplashScreen";
 import { CommandPalette } from "@/components/system/CommandPalette";
 import { InstallPrompt } from "@/components/system/InstallPrompt";
+import { EncryptionGate } from "@/features/security/EncryptionGate";
 import type { PrivateUser } from "@/types";
 
 const AuthLayout = lazy(() => import("@/features/auth/AuthLayout"));
@@ -62,6 +64,15 @@ export default function App() {
     })();
   }, [setHydrated, setUser]);
 
+  // Load or unlock end-to-end encryption keys when signed in; clear on logout.
+  useEffect(() => {
+    if (user) {
+      initEncryption(user).catch(() => {});
+    } else {
+      resetEncryptionState();
+    }
+  }, [user?.id]);
+
   // Socket lifecycle follows auth state.
   useEffect(() => {
     if (user) {
@@ -104,6 +115,7 @@ export default function App() {
         </Routes>
       </AnimatePresence>
       {user && <CommandPalette />}
+      {user && <EncryptionGate />}
       <InstallPrompt />
     </Suspense>
   );

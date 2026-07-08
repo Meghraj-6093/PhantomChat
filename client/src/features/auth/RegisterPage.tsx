@@ -6,6 +6,7 @@ import { z } from "zod";
 import confetti from "canvas-confetti";
 import { AtSign, Lock, Mail, User } from "lucide-react";
 import { api } from "@/lib/api";
+import { initEncryption } from "@/lib/encryption";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -41,6 +42,8 @@ export default function RegisterPage() {
       const data = await api<{ user: PrivateUser; accessToken: string }>("/auth/register", { body: values });
       confetti({ particleCount: 120, spread: 75, origin: { y: 0.7 }, colors: ["#6366F1", "#8B5CF6", "#22C55E"] });
       setAuth(data.user, data.accessToken);
+      // Generate this account's E2EE keys, wrapped with the account password.
+      initEncryption(data.user, values.password).catch(() => {});
       setTimeout(() => navigate("/", { replace: true }), 400);
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Registration failed");

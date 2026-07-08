@@ -35,6 +35,20 @@ usersRouter.post("/me/password", validate({ body: changePasswordSchema }), async
   res.json({ success: true, data: null });
 }));
 
+// ── End-to-end encryption keys ───────────────────────────────
+usersRouter.get("/me/keys", asyncHandler(async (req, res) => {
+  res.json({ success: true, data: await usersService.getMyKeys(req.auth!.sub) });
+}));
+
+const setKeysSchema = z.object({
+  publicKey: z.string().min(1).max(2000),
+  encryptedPrivateKey: z.string().min(1).max(8000),
+});
+usersRouter.put("/me/keys", validate({ body: setKeysSchema }), asyncHandler(async (req, res) => {
+  await usersService.setMyKeys(req.auth!.sub, req.body.publicKey, req.body.encryptedPrivateKey);
+  res.json({ success: true, data: null });
+}));
+
 usersRouter.get("/search", validate({ query: z.object({ q: z.string().min(1).max(64) }) }), asyncHandler(async (req, res) => {
   res.json({ success: true, data: await usersService.searchUsers(String(req.query.q), req.auth!.sub) });
 }));

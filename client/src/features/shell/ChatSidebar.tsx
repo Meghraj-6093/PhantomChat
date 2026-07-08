@@ -115,7 +115,11 @@ function ChatRow({ chat, index, myUserId }: { chat: Chat; index: number; myUserI
     ? `${typing[0]!.username} is typing…`
     : last
       ? `${last.senderId === myUserId ? "You: " : ""}${
-          last.isDeleted ? "Message deleted" : (last.content ?? attachmentLabel(last.type))
+          last.isDeleted
+            ? "Message deleted"
+            : last.isEncrypted
+              ? "🔒 Encrypted message"
+              : (last.content ?? attachmentLabel(last.type))
         }`
       : chat.type === "CHANNEL"
         ? "Channel created"

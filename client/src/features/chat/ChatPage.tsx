@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { ArrowLeft, Phone, Video, Info, Pin, Hash, Megaphone } from "lucide-react";
+import { ArrowLeft, Phone, Video, Info, Pin, Hash, Megaphone, Lock } from "lucide-react";
 import { useChat } from "@/hooks/useChats";
 import { useAuthStore } from "@/stores/authStore";
 import { useChatStore } from "@/stores/chatStore";
@@ -18,6 +18,8 @@ import { ThreadPanel } from "./ThreadPanel";
 import { useCall } from "./useCall";
 import { CallOverlay } from "./CallOverlay";
 import { useSocketLive } from "@/hooks/useSocketLive";
+import { chatIsEncryptable } from "@/lib/encryption";
+import { useCryptoStore } from "@/stores/cryptoStore";
 
 export default function ChatPage() {
   const { chatId } = useParams<{ chatId: string }>();
@@ -31,6 +33,8 @@ export default function ChatPage() {
   const toggleRightPanel = useUiStore((s) => s.toggleRightPanel);
   const call = useCall();
   const socketLive = useSocketLive();
+  const cryptoReady = useCryptoStore((s) => s.status === "ready");
+  const encrypted = !!chat && chatIsEncryptable(chat) && cryptoReady;
 
   useEffect(() => {
     setActiveChat(chatId ?? null);
@@ -113,7 +117,12 @@ export default function ChatPage() {
             ))}
 
           <button className="min-w-0 flex-1 text-left" onClick={() => toggleRightPanel()}>
-            <h2 className="truncate text-sm font-bold">{isLoading ? "…" : name}</h2>
+            <h2 className="flex items-center gap-1.5 truncate text-sm font-bold">
+              {isLoading ? "…" : name}
+              {encrypted && (
+                <Lock className="h-3.5 w-3.5 shrink-0 text-success" aria-label="End-to-end encrypted" />
+              )}
+            </h2>
             <p className={cn("truncate text-xs", typing.length ? "italic text-primary-soft" : "text-muted")}>
               {subtitle}
             </p>

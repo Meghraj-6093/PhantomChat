@@ -1,5 +1,6 @@
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Lock } from "lucide-react";
 import {
   SmilePlus, Reply, Pencil, Trash2, Pin, MoreHorizontal, MessagesSquare,
   Check, CheckCheck, Clock, AlertCircle, Download, Forward, Play,
@@ -10,6 +11,9 @@ import { cn, formatMessageTime, formatBytes, formatDuration } from "@/lib/utils"
 import { useChatStore } from "@/stores/chatStore";
 import { useDeleteMessage, usePin, useToggleReaction, useSendMessage } from "@/hooks/useMessages";
 import { replaceMessageInCache } from "@/lib/socket";
+import { useCryptoStore } from "@/stores/cryptoStore";
+import { decryptInto } from "@/lib/encryption";
+import { isEnvelope } from "@/lib/crypto";
 import { useAuthStore } from "@/stores/authStore";
 import { ForwardModal } from "./ForwardModal";
 import type { Chat, Message } from "@/types";
@@ -68,6 +72,19 @@ export const MessageBubble = memo(function MessageBubble({
   const readCount = message._count?.readReceipts ?? 0;
   const threadCount = message._count?.threadReplies ?? 0;
 
+  // Decrypt E2EE messages lazily into the plaintext cache.
+  const cryptoStatus = useCryptoStore((s) => s.status);
+  const decrypted = useCryptoStore((s) => (message.isEncrypted ? s.plaintext[message.id] : undefined));
+  const decryptFailed = useCryptoStore((s) => (message.isEncrypted ? !!s.failed[message.id] : false));
+  useEffect(() => {
+    if (message.isEncrypted && decrypted === undefined && !decryptFailed && cryptoStatus === "ready") {
+      decryptInto(message);
+    }
+  }, [message, decrypted, decryptFailed, cryptoStatus]);
+
+  const displayContent = message.isEncrypted ? decrypted ?? null : message.content;
+  const decrypting = message.isEncrypted && decrypted === undefined && !decryptFailed;
+
   return (
     <motion.div
       initial={message.pending ? { opacity: 0, y: 10, scale: 0.98 } : false}
@@ -113,7 +130,7 @@ export const MessageBubble = memo(function MessageBubble({
             <span className="font-medium text-primary-soft">
               {message.replyTo.sender?.displayName ?? "Unknown"}:
             </span>{" "}
-            {message.replyTo.content?.slice(0, 80) ?? "attachment"}
+            {isEnvelope(message.replyTo.content) ? "🔒 Encrypted message" : message.replyTo.content?.slice(0, 80) ?? "attachment"}
           </div>
         )}
 
@@ -130,7 +147,17 @@ export const MessageBubble = memo(function MessageBubble({
           {message.attachments.map((att) => (
             <AttachmentView key={att.id} attachment={att} />
           ))}
-          {message.content && renderMarkdown(message.content)}
+          {decrypting ? (
+            <span className="inline-flex items-center gap-1 text-xs italic text-muted">
+              <Lock className="h-3 w-3" /> Decrypting…
+            </span>
+          ) : decryptFailed ? (
+            <span className="inline-flex items-center gap-1 text-xs italic text-muted">
+              <Lock className="h-3 w-3" /> Unable to decrypt this message
+            </span>
+          ) : (
+            displayContent && renderMarkdown(displayContent)
+          )}
 
           <span className={cn("ml-2 inline-flex translate-y-0.5 items-center gap-1 text-[10px]", isOwn ? "text-white/70" : "text-muted/70")}>
             {message.isEdited && <span>edited</span>}
