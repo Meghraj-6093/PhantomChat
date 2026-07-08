@@ -8,7 +8,10 @@ export interface OAuthProfile {
   avatarUrl?: string;
 }
 
-const redirectUri = (provider: string) => `${env.CLIENT_URL}/auth/callback/${provider}`;
+// Strip any trailing slash so a CLIENT_URL like "https://example.com/" doesn't
+// produce a double-slash redirect_uri that silently fails to match what's
+// registered in the Google/GitHub OAuth app settings.
+const redirectUri = (provider: string) => `${env.CLIENT_URL.replace(/\/+$/, "")}/auth/callback/${provider}`;
 
 export function googleAuthUrl(state: string): string {
   if (!env.GOOGLE_CLIENT_ID) throw ApiError.badRequest("Google login is not configured");

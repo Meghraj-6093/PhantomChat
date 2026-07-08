@@ -4,23 +4,30 @@ export default {
   darkMode: "class",
   theme: {
     extend: {
+      // Palette follows the 60/30/10 rule:
+      //  60% dominant  -> background / card (neutral surfaces, most of the screen)
+      //  30% secondary -> line / muted / slate-700-ish surfaces (borders, secondary text, hover states)
+      //  10% accent    -> primary (the one brand hue; accent is an alias of it, not a second color)
       colors: {
-        background: "#09090B",
-        card: "#111827",
+        background: "#0A0A0C",
+        card: "#131316",
         primary: {
           DEFAULT: "#6366F1",
           soft: "#818CF8",
           deep: "#4F46E5",
         },
+        // Alias of primary — kept as a separate token only so existing
+        // `accent-soft` / `text-accent-soft` usages don't need renaming, not
+        // because it's a second hue in the palette.
         accent: {
-          DEFAULT: "#8B5CF6",
-          soft: "#A78BFA",
+          DEFAULT: "#6366F1",
+          soft: "#818CF8",
         },
         success: "#22C55E",
         danger: "#EF4444",
         warning: "#F59E0B",
-        muted: "#94A3B8",
-        line: "rgba(148, 163, 184, 0.12)",
+        muted: "#9A9AA5",
+        line: "rgba(161, 161, 170, 0.12)",
       },
       fontFamily: {
         sans: ["Inter", "Inter Variable", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
