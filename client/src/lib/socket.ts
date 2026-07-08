@@ -6,6 +6,13 @@ import type { Chat, Message, Notification, Paginated } from "@/types";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? "/";
 
+// Only attempt a Socket.io connection when a persistent real-time server is
+// actually configured. On a serverless-only deploy (no VITE_SOCKET_URL set)
+// there is nothing at the other end, so trying anyway just spams the console
+// with failed WebSocket attempts on an endless reconnection loop; the
+// polling fallback in useMessages/useChats carries real-time updates instead.
+const REALTIME_ENABLED = !!import.meta.env.VITE_SOCKET_URL;
+
 let socket: Socket | null = null;
 let heartbeat: ReturnType<typeof setInterval> | null = null;
 
@@ -23,6 +30,7 @@ export function isSocketLive(): boolean {
 }
 
 export function connectSocket() {
+  if (!REALTIME_ENABLED) return null;
   const token = useAuthStore.getState().accessToken;
   if (!token || socket?.connected) return socket;
 
