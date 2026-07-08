@@ -1,20 +1,20 @@
 import type { Server } from "socket.io";
 import type { AuthedSocket } from "./index";
 import { prisma } from "../lib/prisma";
-import { redis } from "../lib/redis";
+import { kv } from "../lib/kv";
 import { createNotification } from "../modules/notifications/notifications.service";
 
 /**
  * WebRTC signaling relay for 1:1 audio/video calls and screen sharing.
  * Media flows peer-to-peer; the server only relays SDP offers/answers and
- * ICE candidates, and tracks ringing state in Redis.
+ * ICE candidates, and tracks ringing state in the key-value store.
  */
 export function registerCallHandlers(io: Server, socket: AuthedSocket) {
   const userId = socket.data.auth.sub;
   const callKey = (a: string, b: string) => `call:${[a, b].sort().join(":")}`;
 
   socket.on("call:initiate", async (payload: { targetUserId: string; kind: "audio" | "video"; offer: unknown }) => {
-    const online = await redis.exists(`presence:${payload.targetUserId}`);
+    const online = await kv.exists(`presence:${payload.targetUserId}`);
     if (!online) {
       socket.emit("call:unavailable", { targetUserId: payload.targetUserId });
       await createNotification({
@@ -25,7 +25,7 @@ export function registerCallHandlers(io: Server, socket: AuthedSocket) {
       });
       return;
     }
-    await redis.set(callKey(userId, payload.targetUserId), "ringing", "EX", 60);
+    await kv.set(callKey(userId, payload.targetUserId), "ringing", { ttl: 60 });
     const caller = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, username: true, displayName: true, avatarUrl: true },
@@ -38,12 +38,12 @@ export function registerCallHandlers(io: Server, socket: AuthedSocket) {
   });
 
   socket.on("call:answer", async (payload: { targetUserId: string; answer: unknown }) => {
-    await redis.set(callKey(userId, payload.targetUserId), "active", "EX", 60 * 60 * 4);
+    await kv.set(callKey(userId, payload.targetUserId), "active", { ttl: 60 * 60 * 4 });
     io.to(`user:${payload.targetUserId}`).emit("call:answered", { from: userId, answer: payload.answer });
   });
 
   socket.on("call:decline", async (payload: { targetUserId: string }) => {
-    await redis.del(callKey(userId, payload.targetUserId));
+    await kv.del(callKey(userId, payload.targetUserId));
     io.to(`user:${payload.targetUserId}`).emit("call:declined", { from: userId });
   });
 
@@ -52,7 +52,7 @@ export function registerCallHandlers(io: Server, socket: AuthedSocket) {
   });
 
   socket.on("call:end", async (payload: { targetUserId: string }) => {
-    await redis.del(callKey(userId, payload.targetUserId));
+    await kv.del(callKey(userId, payload.targetUserId));
     io.to(`user:${payload.targetUserId}`).emit("call:ended", { from: userId });
   });
 

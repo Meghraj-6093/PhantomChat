@@ -377,3 +377,18 @@ model AuditLog {
   @@index([actorId, createdAt(sort: Desc)])
   @@index([action])
 }
+
+// ─────────────────────────── Ephemeral key-value ────────────────────────────
+// Postgres-backed replacement for Redis. Holds short-lived data: OAuth login
+// state, chat slow-mode locks, presence counters and call signaling flags.
+// Rows carry an optional `expiresAt`; reads treat expired rows as absent and a
+// periodic sweep deletes them. Lets the app run with zero external cache.
+
+model KeyValue {
+  key       String    @id
+  value     String
+  expiresAt DateTime?
+  updatedAt DateTime  @default(now())
+
+  @@index([expiresAt])
+}

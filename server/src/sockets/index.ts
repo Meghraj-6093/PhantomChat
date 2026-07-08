@@ -3,7 +3,7 @@ import { Server, type Socket } from "socket.io";
 import { env } from "../config/env";
 import { logger } from "../lib/logger";
 import { prisma } from "../lib/prisma";
-import { redis, presenceKey } from "../lib/redis";
+import { kv, presenceKey } from "../lib/kv";
 import { verifyAccessToken, type AccessTokenPayload } from "../utils/jwt";
 import { setIo } from "./emitter";
 import { registerChatHandlers } from "./chat.handlers";
@@ -54,7 +54,7 @@ export function initSocketServer(httpServer: HttpServer): Server {
     await goOnline(io, userId);
 
     socket.on("presence:heartbeat", async () => {
-      await redis.expire(presenceKey(userId), PRESENCE_TTL);
+      await kv.expire(presenceKey(userId), PRESENCE_TTL);
     });
 
     socket.on("presence:set", async (status: string) => {
@@ -76,8 +76,7 @@ export function initSocketServer(httpServer: HttpServer): Server {
 }
 
 async function goOnline(io: Server, userId: string) {
-  const count = await redis.incr(presenceKey(userId));
-  await redis.expire(presenceKey(userId), PRESENCE_TTL);
+  const count = await kv.incr(presenceKey(userId), PRESENCE_TTL);
   if (count === 1) {
     await prisma.user
       .update({ where: { id: userId }, data: { status: "ONLINE", lastSeenAt: new Date() } })
@@ -87,9 +86,9 @@ async function goOnline(io: Server, userId: string) {
 }
 
 async function goOffline(io: Server, userId: string) {
-  const count = await redis.decr(presenceKey(userId));
+  const count = await kv.decr(presenceKey(userId));
   if (count <= 0) {
-    await redis.del(presenceKey(userId));
+    await kv.del(presenceKey(userId));
     await prisma.user
       .update({ where: { id: userId }, data: { status: "OFFLINE", lastSeenAt: new Date() } })
       .catch(() => {});

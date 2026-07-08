@@ -6,7 +6,7 @@ import { sanitizeText, looksLikeSpam } from "../../utils/sanitize";
 import { emitToChat, emitToUser } from "../../sockets/emitter";
 import { assertMember } from "../chats/chats.service";
 import { createNotification } from "../notifications/notifications.service";
-import { redis } from "../../lib/redis";
+import { kv } from "../../lib/kv";
 
 export const messageInclude = {
   sender: { select: publicUserSelect },
@@ -36,11 +36,11 @@ export async function sendMessage(chatId: string, senderId: string, input: SendM
     throw ApiError.forbidden("Only channel staff can post here");
   }
 
-  // Slow mode enforcement via Redis.
+  // Slow mode enforcement — an NX lock keyed per chat+user, TTL = slow-mode window.
   if (member.chat.slowModeSeconds > 0 && member.role === "MEMBER") {
     const key = `slowmode:${chatId}:${senderId}`;
-    const set = await redis.set(key, "1", "EX", member.chat.slowModeSeconds, "NX");
-    if (!set) throw ApiError.tooMany(`Slow mode: wait ${member.chat.slowModeSeconds}s between messages`);
+    const acquired = await kv.set(key, "1", { ttl: member.chat.slowModeSeconds, nx: true });
+    if (!acquired) throw ApiError.tooMany(`Slow mode: wait ${member.chat.slowModeSeconds}s between messages`);
   }
 
   const content = input.content ? sanitizeText(input.content) : undefined;

@@ -5,7 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiError } from "../../utils/ApiError";
 import * as authService from "./auth.service";
 import * as oauth from "./oauth.providers";
-import { redis } from "../../lib/redis";
+import { kv } from "../../lib/kv";
 
 const REFRESH_COOKIE = "phantom_refresh";
 
@@ -117,7 +117,7 @@ const OAUTH_STATE_TTL = 600;
 export const oauthStart = asyncHandler(async (req, res) => {
   const provider = req.params.provider;
   const state = crypto.randomBytes(16).toString("hex");
-  await redis.set(`oauth_state:${state}`, provider!, "EX", OAUTH_STATE_TTL);
+  await kv.set(`oauth_state:${state}`, provider!, { ttl: OAUTH_STATE_TTL });
   const url =
     provider === "google" ? oauth.googleAuthUrl(state)
     : provider === "github" ? oauth.githubAuthUrl(state)
@@ -131,7 +131,7 @@ export const oauthCallback = asyncHandler(async (req, res) => {
   const { code, state } = req.body as { code?: string; state?: string };
   if (!code || !state) throw ApiError.badRequest("Missing code or state");
 
-  const stored = await redis.getdel(`oauth_state:${state}`);
+  const stored = await kv.getdel(`oauth_state:${state}`);
   if (stored !== provider) throw ApiError.badRequest("Invalid OAuth state");
 
   const profile =
