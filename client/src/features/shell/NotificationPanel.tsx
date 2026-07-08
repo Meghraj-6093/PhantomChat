@@ -46,7 +46,7 @@ export function NotificationPanel({ open, onClose }: { open: boolean; onClose: (
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 350 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
           >
             <div className="flex items-center justify-between border-b border-line px-4 py-3">
               <h2 className="flex items-center gap-2 text-base font-semibold">

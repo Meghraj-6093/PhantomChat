@@ -186,6 +186,7 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.12, ease: "easeOut" }}
             className="mb-2 flex items-center gap-2 overflow-hidden rounded-xl border border-line bg-card/60 px-3 py-2"
           >
             {editing ? <Pencil className="h-4 w-4 shrink-0 text-warning" /> : <ReplyIcon className="h-4 w-4 shrink-0 text-primary-soft" />}
@@ -324,30 +325,22 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
           </button>
 
           {text.trim() || files.length ? (
-            <motion.button
-              key="send"
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              whileTap={{ scale: 0.9 }}
+            <button
               onClick={() => doSend()}
               disabled={uploading}
               className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-brand text-white shadow-glow disabled:opacity-60"
               title="Send"
             >
               {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-            </motion.button>
+            </button>
           ) : (
-            <motion.button
-              key="mic"
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              whileTap={{ scale: 0.9 }}
+            <button
               onClick={startRecording}
               className="flex h-11 w-11 items-center justify-center rounded-2xl border border-line text-muted transition hover:text-slate-100"
               title="Voice message"
             >
               <Mic className="h-5 w-5" />
-            </motion.button>
+            </button>
           )}
         </div>
       )}

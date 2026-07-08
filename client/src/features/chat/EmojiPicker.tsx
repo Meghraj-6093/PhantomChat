@@ -40,9 +40,10 @@ export function EmojiPicker({ onPick }: { onPick: (emoji: string) => void }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      className="glass-strong w-72 rounded-2xl p-2"
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.1 }}
+      className="glass-strong w-[min(18rem,calc(100vw-1.5rem))] rounded-2xl p-2"
     >
       <div className="mb-1 flex gap-0.5 border-b border-line pb-1.5">
         {CATEGORIES.map((c, i) => (

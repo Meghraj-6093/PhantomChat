@@ -44,7 +44,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-0 backdrop-blur-sm sm:items-center sm:px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -60,10 +60,10 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
               "max-h-[85vh] overflow-y-auto pb-safe",
               className
             )}
-            initial={{ opacity: 0, y: 40, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.98 }}
-            transition={{ type: "spring", damping: 28, stiffness: 350 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
           >
             {title && (

@@ -39,14 +39,18 @@ export default {
       },
       boxShadow: {
         glass: "0 8px 32px rgba(0, 0, 0, 0.37)",
-        glow: "0 0 24px rgba(99, 102, 241, 0.35)",
-        "glow-accent": "0 0 24px rgba(139, 92, 246, 0.35)",
+        // A subtle lift on the ~10% accent surfaces (primary CTA), not a neon halo.
+        glow: "0 2px 14px rgba(99, 102, 241, 0.22)",
+        "glow-accent": "0 2px 14px rgba(99, 102, 241, 0.22)",
         soft: "0 4px 24px rgba(0, 0, 0, 0.25)",
       },
       backgroundImage: {
-        "gradient-brand": "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-        "gradient-aurora":
-          "radial-gradient(ellipse 80% 50% at 20% -10%, rgba(99,102,241,0.28), transparent), radial-gradient(ellipse 60% 40% at 90% 10%, rgba(139,92,246,0.22), transparent)",
+        // Single-hue gradient (no second accent color) for the small set of
+        // primary CTA surfaces.
+        "gradient-brand": "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)",
+        // Barely-there depth cue behind the shell — kept minimal so the
+        // accent hue doesn't dominate the screen.
+        "gradient-aurora": "radial-gradient(ellipse 70% 40% at 20% -10%, rgba(99,102,241,0.08), transparent)",
       },
       keyframes: {
         shimmer: {

@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Plus, Search, Hash, Megaphone, Ghost } from "lucide-react";
 import { useChats } from "@/hooks/useChats";
 import { useAuthStore } from "@/stores/authStore";
@@ -87,8 +86,8 @@ export function ChatSidebar() {
             }
           />
         )}
-        {filtered.map((chat, i) => (
-          <ChatRow key={chat.id} chat={chat} index={i} myUserId={user?.id} />
+        {filtered.map((chat) => (
+          <ChatRow key={chat.id} chat={chat} myUserId={user?.id} />
         ))}
       </div>
 
@@ -104,7 +103,7 @@ export function ChatSidebar() {
   );
 }
 
-function ChatRow({ chat, index, myUserId }: { chat: Chat; index: number; myUserId?: string }) {
+function ChatRow({ chat, myUserId }: { chat: Chat; myUserId?: string }) {
   const typing = useChatStore((s) => s.typing[chat.id] ?? EMPTY_TYPING);
   const isActive = useChatStore((s) => s.activeChatId === chat.id);
   const name = chatDisplayName(chat, myUserId);
@@ -126,11 +125,6 @@ function ChatRow({ chat, index, myUserId }: { chat: Chat; index: number; myUserI
         : "Say hello 👋";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.02, 0.3) }}
-    >
       <NavLink
         to={`/chat/${chat.id}`}
         className={({ isActive }) =>
@@ -180,7 +174,6 @@ function ChatRow({ chat, index, myUserId }: { chat: Chat; index: number; myUserI
           </div>
         </div>
       </NavLink>
-    </motion.div>
   );
 }
 

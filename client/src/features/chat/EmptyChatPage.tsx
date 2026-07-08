@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Ghost, MessageSquarePlus, Menu, Sparkles, Command } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -23,22 +22,12 @@ export default function EmptyChatPage() {
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 pb-24 text-center md:pb-6">
-        <motion.div
-          initial={{ scale: 0.85, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="relative"
-        >
+        <div className="relative">
           <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-brand shadow-glow">
             <Ghost className="h-12 w-12 text-white" />
           </div>
-          <motion.div
-            className="absolute -right-2 -top-2"
-            animate={{ rotate: [0, 12, 0] }}
-            transition={{ repeat: Infinity, duration: 3 }}
-          >
-            <Sparkles className="h-6 w-6 text-accent-soft" />
-          </motion.div>
-        </motion.div>
+          <Sparkles className="absolute -right-2 -top-2 h-6 w-6 text-accent-soft" />
+        </div>
 
         <div>
           <h2 className="text-2xl font-bold">Your space awaits</h2>

@@ -22,7 +22,7 @@ export function useMessages(chatId: string | undefined, threadRootId: string | n
     // When there is no live socket (e.g. serverless deploy), poll the open
     // conversation so new messages arrive without a manual refresh. Polling
     // stops automatically once a real socket connects.
-    refetchInterval: () => (isSocketLive() ? false : 4000),
+    refetchInterval: () => (isSocketLive() ? false : 2500),
     refetchIntervalInBackground: false,
   });
 }

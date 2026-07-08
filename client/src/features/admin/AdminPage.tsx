@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import {
   Shield, Users, MessageSquare, Flag, ScrollText, Menu, Ban, Search,
   TrendingUp, Activity, UserX, CircleDot,
@@ -102,21 +101,15 @@ function Overview() {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((c, i) => (
-          <motion.div
-            key={c.label}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="glass rounded-2xl p-4"
-          >
+        {cards.map((c) => (
+          <div key={c.label} className="glass rounded-2xl p-4">
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted">{c.label}</span>
               <span className={c.color}>{c.icon}</span>
             </div>
             <p className="mt-1 text-2xl font-extrabold tabular-nums">{c.value.toLocaleString()}</p>
             <p className="text-[11px] text-muted">{c.sub}</p>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -129,10 +122,9 @@ function Overview() {
             {stats.messagesPerDay.map((d) => (
               <div key={d.day} className="flex flex-1 flex-col items-center gap-1">
                 <span className="text-[10px] tabular-nums text-muted">{d.count}</span>
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: `${Math.max((d.count / max) * 100, 4)}%` }}
-                  className="w-full max-w-10 rounded-t-lg bg-gradient-to-t from-primary to-accent"
+                <div
+                  style={{ height: `${Math.max((d.count / max) * 100, 4)}%` }}
+                  className="w-full max-w-10 rounded-t-lg bg-primary"
                 />
                 <span className="text-[9px] text-muted">{d.day.slice(5)}</span>
               </div>

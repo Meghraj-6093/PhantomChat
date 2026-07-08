@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { UserPlus, Users, Clock, Ban, MessageSquare, Check, X, Menu, Search } from "lucide-react";
 import {
   useBlockedUsers, useFriends, usePendingFriends, useRemoveFriend,
@@ -109,14 +108,8 @@ function AllFriends() {
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search friends…" className="input-base pl-10" />
       </div>
       <div className="space-y-1">
-        {filtered.map((f, i) => (
-          <motion.div
-            key={f.friendshipId}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.min(i * 0.03, 0.3) }}
-            className="glass flex items-center gap-3 rounded-2xl p-3"
-          >
+        {filtered.map((f) => (
+          <div key={f.friendshipId} className="glass flex items-center gap-3 rounded-2xl p-3">
             <Avatar src={f.user.avatarUrl} name={f.user.displayName} userId={f.user.id} size="md" showStatus status={f.user.status} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{f.user.displayName}</p>
@@ -142,7 +135,7 @@ function AllFriends() {
             >
               <X className="h-4 w-4" />
             </Button>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

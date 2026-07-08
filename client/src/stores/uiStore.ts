@@ -8,11 +8,14 @@ interface UiState {
   sidebarOpen: boolean;       // mobile drawer
   rightPanelOpen: boolean;    // conversation info panel
   commandPaletteOpen: boolean;
+  shortcutsHelpOpen: boolean;
   wallpaper: string | null;   // chat background preset id
   setTheme: (t: Theme) => void;
+  toggleTheme: () => void;
   toggleSidebar: (open?: boolean) => void;
   toggleRightPanel: (open?: boolean) => void;
   setCommandPalette: (open: boolean) => void;
+  setShortcutsHelp: (open: boolean) => void;
   setWallpaper: (w: string | null) => void;
 }
 
@@ -23,15 +26,18 @@ export const useUiStore = create<UiState>()(
       sidebarOpen: false,
       rightPanelOpen: false,
       commandPaletteOpen: false,
+      shortcutsHelpOpen: false,
       wallpaper: null,
       setTheme: (theme) => {
         document.documentElement.classList.toggle("light", theme === "light");
         document.documentElement.classList.toggle("dark", theme === "dark");
         set({ theme });
       },
+      toggleTheme: () => get().setTheme(get().theme === "dark" ? "light" : "dark"),
       toggleSidebar: (open) => set({ sidebarOpen: open ?? !get().sidebarOpen }),
       toggleRightPanel: (open) => set({ rightPanelOpen: open ?? !get().rightPanelOpen }),
       setCommandPalette: (commandPaletteOpen) => set({ commandPaletteOpen }),
+      setShortcutsHelp: (shortcutsHelpOpen) => set({ shortcutsHelpOpen }),
       setWallpaper: (wallpaper) => set({ wallpaper }),
     }),
     {

@@ -28,6 +28,7 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const setActiveChat = useChatStore((s) => s.setActiveChat);
   const threadRoot = useChatStore((s) => s.threadRoot);
+  const setThreadRoot = useChatStore((s) => s.setThreadRoot);
   const typing = useChatStore((s) => (chatId ? s.typing[chatId] : undefined) ?? EMPTY_TYPING);
   const rightPanelOpen = useUiStore((s) => s.rightPanelOpen);
   const toggleRightPanel = useUiStore((s) => s.toggleRightPanel);
@@ -35,6 +36,14 @@ export default function ChatPage() {
   const socketLive = useSocketLive();
   const cryptoReady = useCryptoStore((s) => s.status === "ready");
   const encrypted = !!chat && chatIsEncryptable(chat) && cryptoReady;
+
+  // Only one right-hand panel at a time — on laptop widths (lg: both panels
+  // go static/inline instead of overlaying) having both open simultaneously
+  // doesn't leave enough room for the message column.
+  const openRightPanel = () => {
+    if (!rightPanelOpen) setThreadRoot(null);
+    toggleRightPanel();
+  };
 
   useEffect(() => {
     setActiveChat(chatId ?? null);
@@ -116,7 +125,7 @@ export default function ChatPage() {
               </div>
             ))}
 
-          <button className="min-w-0 flex-1 text-left" onClick={() => toggleRightPanel()}>
+          <button className="min-w-0 flex-1 text-left" onClick={openRightPanel}>
             <h2 className="flex items-center gap-1.5 truncate text-sm font-bold">
               {isLoading ? "…" : name}
               {encrypted && (
@@ -149,7 +158,7 @@ export default function ChatPage() {
             </>
           )}
           <button
-            onClick={() => toggleRightPanel()}
+            onClick={openRightPanel}
             className={cn(
               "rounded-xl p-2 transition hover:bg-slate-700/40",
               rightPanelOpen ? "text-primary-soft" : "text-muted hover:text-slate-100"

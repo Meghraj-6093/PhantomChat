@@ -10,6 +10,7 @@ export function CallOverlay({ call }: { call: CallSession }) {
   const localRef = useRef<HTMLVideoElement>(null);
   const remoteRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (localRef.current && call.localStream) localRef.current.srcObject = call.localStream;
@@ -33,17 +34,14 @@ export function CallOverlay({ call }: { call: CallSession }) {
         className="fixed inset-0 z-[80] flex flex-col bg-background/95 backdrop-blur-xl"
       >
         {/* Remote media */}
-        <div className="relative flex flex-1 items-center justify-center">
+        <div ref={stageRef} className="relative flex flex-1 items-center justify-center">
           {isVideo && call.remoteStream ? (
             <video ref={remoteRef} autoPlay playsInline className="h-full w-full object-contain" />
           ) : (
             <div className="flex flex-col items-center gap-4">
-              <motion.div
-                animate={call.state !== "active" ? { scale: [1, 1.06, 1] } : {}}
-                transition={{ repeat: Infinity, duration: 1.6 }}
-              >
+              <div className={call.state !== "active" ? "animate-pulse" : undefined}>
                 <Avatar src={call.peerAvatar} name={call.peerName || "?"} size="xl" />
-              </motion.div>
+              </div>
               <div className="text-center">
                 <h3 className="text-xl font-bold">{call.peerName}</h3>
                 <p className="text-sm text-muted">
@@ -58,7 +56,13 @@ export function CallOverlay({ call }: { call: CallSession }) {
 
           {/* Local preview */}
           {isVideo && call.localStream && (
-            <motion.div drag dragMomentum={false} className="absolute bottom-24 right-4 h-36 w-24 cursor-grab overflow-hidden rounded-2xl border border-line shadow-glass sm:h-44 sm:w-32">
+            <motion.div
+              drag
+              dragMomentum={false}
+              dragConstraints={stageRef}
+              dragElastic={0}
+              className="absolute bottom-24 right-4 h-36 w-24 cursor-grab overflow-hidden rounded-2xl border border-line shadow-glass sm:h-44 sm:w-32"
+            >
               <video ref={localRef} autoPlay playsInline muted className="h-full w-full object-cover" />
             </motion.div>
           )}
@@ -129,16 +133,17 @@ function CallButton({
 }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <motion.button
-        whileTap={{ scale: 0.9 }}
-        animate={pulse ? { scale: [1, 1.08, 1] } : {}}
-        transition={pulse ? { repeat: Infinity, duration: 1.2 } : {}}
+      <button
         onClick={onClick}
-        className={cn("flex h-14 w-14 items-center justify-center rounded-full text-white shadow-soft", color)}
+        className={cn(
+          "flex h-14 w-14 items-center justify-center rounded-full text-white shadow-soft",
+          pulse && "animate-pulse",
+          color
+        )}
         aria-label={label}
       >
         {children}
-      </motion.button>
+      </button>
       <span className="text-[10px] text-muted">{label}</span>
     </div>
   );

@@ -46,7 +46,7 @@ export default function AppShell() {
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 350 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={{ left: 0.6, right: 0 }}

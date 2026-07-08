@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, MessageSquare, Users, Compass, Settings, Shield, Moon, Sun, Hash } from "lucide-react";
+import { Search, MessageSquare, Users, Compass, Settings, Shield, Moon, Sun, Hash, Keyboard } from "lucide-react";
 import { useUiStore } from "@/stores/uiStore";
 import { useAuthStore } from "@/stores/authStore";
 import { api } from "@/lib/api";
@@ -23,6 +23,7 @@ export function CommandPalette() {
   const setOpen = useUiStore((s) => s.setCommandPalette);
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
+  const setShortcutsHelp = useUiStore((s) => s.setShortcutsHelp);
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -66,10 +67,21 @@ export function CommandPalette() {
       {
         id: "theme",
         label: theme === "dark" ? "Switch to light mode" : "Switch to dark mode",
+        hint: "Ctrl/⌘+Shift+L",
         icon: theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />,
         run: () => {
           setTheme(theme === "dark" ? "light" : "dark");
           setOpen(false);
+        },
+      },
+      {
+        id: "shortcuts",
+        label: "Keyboard shortcuts",
+        hint: "?",
+        icon: <Keyboard className="h-4 w-4" />,
+        run: () => {
+          setOpen(false);
+          setShortcutsHelp(true);
         },
       },
     ];
@@ -84,7 +96,7 @@ export function CommandPalette() {
       run: go(`/chat/${c.id}`),
     }));
     return [...chatCommands, ...base];
-  }, [chats, navigate, setOpen, setTheme, theme, user]);
+  }, [chats, navigate, setOpen, setTheme, setShortcutsHelp, theme, user]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return commands.slice(0, 12);
@@ -120,10 +132,10 @@ export function CommandPalette() {
         >
           <motion.div
             className="glass-strong w-full max-w-lg overflow-hidden rounded-2xl"
-            initial={{ opacity: 0, scale: 0.96, y: -12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -12 }}
-            transition={{ type: "spring", damping: 30, stiffness: 400 }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.12, ease: "easeOut" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 border-b border-line px-4 py-3">

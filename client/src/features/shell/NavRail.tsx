@@ -1,5 +1,4 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Ghost, MessageSquare, Users, Compass, Settings, Shield, Bell, LogOut, Search } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useUiStore } from "@/stores/uiStore";
@@ -41,12 +40,9 @@ export function NavRail() {
 
   return (
     <nav className="flex h-full w-[68px] flex-col items-center gap-2 border-r border-line bg-background/80 py-4 pt-safe backdrop-blur-xl">
-      <motion.div
-        whileHover={{ rotate: [0, -8, 8, 0] }}
-        className="mb-2 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-brand shadow-glow"
-      >
+      <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-brand shadow-glow">
         <Ghost className="h-6 w-6 text-white" />
-      </motion.div>
+      </div>
 
       <NavLink to="/" className={itemClass} title="Chats" end>
         <MessageSquare className="h-5 w-5" />

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import { Compass, Hash, Megaphone, Menu, Search, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { useJoinChat } from "@/hooks/useChats";
@@ -74,14 +73,8 @@ export default function DiscoverPage() {
             </div>
           )}
 
-          {chats?.map((chat, i) => (
-            <motion.div
-              key={chat.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: Math.min(i * 0.05, 0.4) }}
-              className="glass flex flex-col gap-3 rounded-2xl p-4 transition hover:shadow-glow"
-            >
+          {chats?.map((chat) => (
+            <div key={chat.id} className="glass flex flex-col gap-3 rounded-2xl p-4 transition hover:shadow-glow">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary-soft">
                   {chat.avatarUrl ? (
@@ -107,7 +100,7 @@ export default function DiscoverPage() {
               <Button size="sm" className="w-full" loading={joiningId === chat.id} onClick={() => handleJoin(chat.id)}>
                 Join
               </Button>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

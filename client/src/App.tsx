@@ -8,7 +8,9 @@ import { initEncryption, resetEncryptionState } from "@/lib/encryption";
 import { SplashScreen } from "@/components/system/SplashScreen";
 import { CommandPalette } from "@/components/system/CommandPalette";
 import { InstallPrompt } from "@/components/system/InstallPrompt";
+import { ShortcutsHelpModal } from "@/components/system/ShortcutsHelpModal";
 import { EncryptionGate } from "@/features/security/EncryptionGate";
+import { useGlobalShortcuts } from "@/hooks/useGlobalShortcuts";
 import type { PrivateUser } from "@/types";
 
 const AuthLayout = lazy(() => import("@/features/auth/AuthLayout"));
@@ -47,6 +49,8 @@ export default function App() {
   const user = useAuthStore((s) => s.user);
   const setHydrated = useAuthStore((s) => s.setHydrated);
   const setUser = useAuthStore((s) => s.setUser);
+
+  useGlobalShortcuts();
 
   // Silent session restore on boot via refresh cookie.
   useEffect(() => {
@@ -116,6 +120,7 @@ export default function App() {
       </AnimatePresence>
       {user && <CommandPalette />}
       {user && <EncryptionGate />}
+      <ShortcutsHelpModal />
       <InstallPrompt />
     </Suspense>
   );

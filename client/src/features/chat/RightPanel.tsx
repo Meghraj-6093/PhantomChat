@@ -30,10 +30,10 @@ export function RightPanel({ chat }: { chat: Chat }) {
 
   return (
     <motion.aside
-      initial={{ x: 60, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: 60, opacity: 0 }}
-      transition={{ type: "spring", damping: 30, stiffness: 350 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15, ease: "easeOut" }}
       className="glass-strong fixed inset-y-0 right-0 z-40 flex w-full max-w-sm flex-col border-l border-line pt-safe lg:static lg:z-auto lg:w-[320px]"
     >
       <div className="flex items-center justify-between border-b border-line px-4 py-3">

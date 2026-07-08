@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import {
   User, Palette, ShieldCheck, MonitorSmartphone, Menu, Moon, Sun, Check, LogOut, KeyRound,
 } from "lucide-react";
@@ -101,7 +100,7 @@ function ProfileSection() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+    <div className="space-y-5">
       <div className="glass flex items-center gap-4 rounded-2xl p-5">
         <button onClick={changeAvatar} className="group relative" title="Change avatar">
           <Avatar src={user.avatarUrl} name={user.displayName} size="lg" />
@@ -134,7 +133,7 @@ function ProfileSection() {
           {saved ? <><Check className="h-4 w-4" /> Saved</> : "Save changes"}
         </Button>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -157,9 +156,12 @@ function AppearanceSection() {
   ];
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+    <div className="space-y-5">
       <div className="glass rounded-2xl p-5">
-        <h3 className="mb-3 text-sm font-bold">Theme</h3>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-bold">Theme</h3>
+          <kbd className="rounded border border-line px-1.5 py-0.5 text-[10px] text-muted">Ctrl/⌘+Shift+L</kbd>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           {themes.map((t) => (
             <button
@@ -198,7 +200,7 @@ function AppearanceSection() {
           ))}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -233,7 +235,7 @@ function SessionsList() {
   });
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+    <div className="space-y-3">
       <div className="glass rounded-2xl p-5">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-bold">Active sessions</h3>
@@ -259,7 +261,7 @@ function SessionsList() {
           {sessions?.length === 0 && <p className="text-xs text-muted">No active sessions.</p>}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

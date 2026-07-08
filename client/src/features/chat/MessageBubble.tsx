@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { renderMarkdown } from "@/lib/markdown";
 import { cn, formatMessageTime, formatBytes, formatDuration } from "@/lib/utils";
 import { useChatStore } from "@/stores/chatStore";
+import { useUiStore } from "@/stores/uiStore";
 import { useDeleteMessage, usePin, useToggleReaction, useSendMessage } from "@/hooks/useMessages";
 import { replaceMessageInCache } from "@/lib/socket";
 import { useCryptoStore } from "@/stores/cryptoStore";
@@ -36,12 +37,19 @@ export const MessageBubble = memo(function MessageBubble({
   const [forwardOpen, setForwardOpen] = useState(false);
   const setReplyTo = useChatStore((s) => s.setReplyTo);
   const setEditing = useChatStore((s) => s.setEditing);
-  const setThreadRoot = useChatStore((s) => s.setThreadRoot);
+  const setThreadRootRaw = useChatStore((s) => s.setThreadRoot);
+  const toggleRightPanel = useUiStore((s) => s.toggleRightPanel);
   const toggleReaction = useToggleReaction();
   const deleteMessage = useDeleteMessage();
   const pinMutation = usePin();
   const sendMessage = useSendMessage();
   const user = useAuthStore((s) => s.user);
+
+  // Only one right-hand panel at a time (see ChatPage's openRightPanel).
+  const setThreadRoot = (m: Message) => {
+    toggleRightPanel(false);
+    setThreadRootRaw(m);
+  };
 
   const retrySend = () => {
     // Drop the failed placeholder and re-send with the same payload.
@@ -92,8 +100,9 @@ export const MessageBubble = memo(function MessageBubble({
 
   return (
     <motion.div
-      initial={message.pending ? { opacity: 0, y: 10, scale: 0.98 } : false}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={message.pending ? { opacity: 0 } : false}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.12 }}
       className={cn("group relative flex gap-2.5 px-1", grouped ? "mt-0.5" : "mt-3", isOwn && "flex-row-reverse")}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => {

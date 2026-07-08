@@ -13,10 +13,12 @@ export default defineConfig({
         name: "PhantomChat",
         short_name: "Phantom",
         description: "A premium real-time chat platform — messaging, calls, groups and channels.",
-        theme_color: "#09090B",
-        background_color: "#09090B",
+        theme_color: "#0A0A0C",
+        background_color: "#0A0A0C",
         display: "standalone",
-        orientation: "portrait-primary",
+        // No orientation lock — the installed app runs on phones, tablets,
+        // and desktops, and portrait-primary previously broke it on
+        // landscape tablets/laptops.
         start_url: "/",
         scope: "/",
         categories: ["social", "communication"],
