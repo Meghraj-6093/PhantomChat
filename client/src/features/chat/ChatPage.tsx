@@ -61,7 +61,7 @@ export default function ChatPage() {
           .then(() => queryClient.invalidateQueries({ queryKey: ["chats"] }))
           .catch(() => {});
       markRead();
-      markInterval = setInterval(markRead, 5000);
+      markInterval = setInterval(markRead, 3000);
     }
 
     return () => {

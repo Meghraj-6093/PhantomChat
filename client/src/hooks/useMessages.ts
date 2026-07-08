@@ -21,8 +21,11 @@ export function useMessages(chatId: string | undefined, threadRootId: string | n
     staleTime: 60_000,
     // When there is no live socket (e.g. serverless deploy), poll the open
     // conversation so new messages arrive without a manual refresh. Polling
-    // stops automatically once a real socket connects.
-    refetchInterval: () => (isSocketLive() ? false : 2500),
+    // stops automatically once a real socket connects. 1s is about as tight
+    // as this can safely go on serverless without risking function-invocation
+    // caps or exhausting the DB connection pool — see the "instant" tradeoff
+    // discussion this was tuned against.
+    refetchInterval: () => (isSocketLive() ? false : 1000),
     refetchIntervalInBackground: false,
   });
 }

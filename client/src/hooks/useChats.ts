@@ -9,8 +9,10 @@ export function useChats() {
     queryKey: ["chats"],
     queryFn: () => api<Chat[]>("/chats"),
     // Without a live socket, poll so unread badges and last-message previews
-    // stay current. Disabled automatically once a socket connects.
-    refetchInterval: () => (isSocketLive() ? false : 5000),
+    // stay current. Disabled automatically once a socket connects. This is
+    // always mounted (visible on every authenticated route), so it's kept a
+    // touch above the open-conversation poll rather than matching it exactly.
+    refetchInterval: () => (isSocketLive() ? false : 1200),
     refetchIntervalInBackground: false,
   });
 }
@@ -21,7 +23,7 @@ export function useChat(chatId: string | undefined) {
     queryFn: () => api<Chat>(`/chats/${chatId}`),
     enabled: !!chatId,
     // Picks up member/role/slow-mode changes made by someone else mid-chat.
-    refetchInterval: () => (isSocketLive() ? false : 10_000),
+    refetchInterval: () => (isSocketLive() ? false : 5000),
   });
 }
 

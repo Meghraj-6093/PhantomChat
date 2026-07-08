@@ -10,7 +10,7 @@ export function useFriends() {
     queryFn: () => api<FriendEntry[]>("/friends"),
     // No live socket (serverless): poll so a friend coming online/offline or
     // being removed elsewhere shows up without a manual refresh.
-    refetchInterval: () => (isSocketLive() ? false : 15_000),
+    refetchInterval: () => (isSocketLive() ? false : 4000),
   });
 }
 
@@ -20,7 +20,7 @@ export function usePendingFriends() {
     queryFn: () => api<{ incoming: FriendEntry[]; outgoing: FriendEntry[] }>("/friends/pending"),
     // This drives the NavRail badge, which is always mounted — poll for new
     // incoming requests when there's no socket to push them.
-    refetchInterval: () => (isSocketLive() ? false : 10_000),
+    refetchInterval: () => (isSocketLive() ? false : 3000),
   });
 }
 
