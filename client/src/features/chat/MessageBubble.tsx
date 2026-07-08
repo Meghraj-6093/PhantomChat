@@ -80,7 +80,12 @@ export const MessageBubble = memo(function MessageBubble({
     if (message.isEncrypted && decrypted === undefined && !decryptFailed && cryptoStatus === "ready") {
       decryptInto(message);
     }
-  }, [message, decrypted, decryptFailed, cryptoStatus]);
+    // Depend on primitives, not the `message` object — polling refetches hand
+    // back a new object for the same message every few seconds, which would
+    // otherwise re-trigger this effect continuously while never changing the
+    // outcome.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [message.id, message.isEncrypted, decrypted, decryptFailed, cryptoStatus]);
 
   const displayContent = message.isEncrypted ? decrypted ?? null : message.content;
   const decrypting = message.isEncrypted && decrypted === undefined && !decryptFailed;

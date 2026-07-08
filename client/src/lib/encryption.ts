@@ -71,6 +71,16 @@ async function idbDelete(userId: string): Promise<void> {
 
 // ─────────────────────────── lifecycle ───────────────────────────
 
+// Login/Register call initEncryption with the account password right after
+// setAuth(); that same setAuth() also flips App.tsx's `user` state, which
+// fires its own passphrase-less initEncryption() call. Without coalescing,
+// the two race: the passphrase-less call can finish its IndexedDB check first
+// and flash a bogus "set up encryption" / "unlock" prompt while the real,
+// authoritative (passphrase-bearing) call is still in flight. Track the
+// in-flight attempt per user so a second call either piggybacks on it or, if
+// it actually carries a passphrase and the first didn't, supersedes it.
+let inFlight: { userId: string; promise: Promise<void>; hasPassphrase: boolean } | null = null;
+
 /**
  * Ensure the current user's encryption keys are loaded. With a passphrase this
  * will generate keys (first ever) or restore them from the server backup (new
@@ -85,17 +95,30 @@ export async function initEncryption(user: PrivateUser, passphrase?: string): Pr
   }
   if (store.status === "ready" && store.myUserId === user.id) return;
 
-  const existing = await idbGet(user.id).catch(() => undefined);
-  if (existing) {
-    store.setKeys(user.id, existing.publicKey, existing.privateKey);
-    return;
+  if (inFlight && inFlight.userId === user.id && !(passphrase && !inFlight.hasPassphrase)) {
+    return inFlight.promise;
   }
 
-  if (!passphrase) {
-    store.setStatus(user.hasKeyBackup ? "locked" : "setup");
-    return;
+  const promise = (async () => {
+    const existing = await idbGet(user.id).catch(() => undefined);
+    if (existing) {
+      store.setKeys(user.id, existing.publicKey, existing.privateKey);
+      return;
+    }
+
+    if (!passphrase) {
+      store.setStatus(user.hasKeyBackup ? "locked" : "setup");
+      return;
+    }
+    await setupWithPassphrase(user, passphrase);
+  })();
+
+  inFlight = { userId: user.id, promise, hasPassphrase: !!passphrase };
+  try {
+    await promise;
+  } finally {
+    if (inFlight?.promise === promise) inFlight = null;
   }
-  await setupWithPassphrase(user, passphrase);
 }
 
 async function setupWithPassphrase(user: PrivateUser, passphrase: string): Promise<void> {

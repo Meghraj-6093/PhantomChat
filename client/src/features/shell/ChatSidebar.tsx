@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Plus, Search, Hash, Megaphone, Ghost } from "lucide-react";
 import { useChats } from "@/hooks/useChats";
 import { useAuthStore } from "@/stores/authStore";
-import { useChatStore } from "@/stores/chatStore";
+import { useChatStore, EMPTY_TYPING } from "@/stores/chatStore";
 import { Avatar } from "@/components/ui/Avatar";
 import { ChatListSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -105,7 +105,7 @@ export function ChatSidebar() {
 }
 
 function ChatRow({ chat, index, myUserId }: { chat: Chat; index: number; myUserId?: string }) {
-  const typing = useChatStore((s) => s.typing[chat.id] ?? []);
+  const typing = useChatStore((s) => s.typing[chat.id] ?? EMPTY_TYPING);
   const isActive = useChatStore((s) => s.activeChatId === chat.id);
   const name = chatDisplayName(chat, myUserId);
   const dmUser = chatAvatarUser(chat, myUserId);

@@ -4,7 +4,7 @@ import { AnimatePresence } from "framer-motion";
 import { ArrowLeft, Phone, Video, Info, Pin, Hash, Megaphone, Lock } from "lucide-react";
 import { useChat } from "@/hooks/useChats";
 import { useAuthStore } from "@/stores/authStore";
-import { useChatStore } from "@/stores/chatStore";
+import { useChatStore, EMPTY_TYPING } from "@/stores/chatStore";
 import { useUiStore } from "@/stores/uiStore";
 import { Avatar } from "@/components/ui/Avatar";
 import { chatDisplayName, chatAvatarUser, cn, formatLastSeen } from "@/lib/utils";
@@ -28,7 +28,7 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const setActiveChat = useChatStore((s) => s.setActiveChat);
   const threadRoot = useChatStore((s) => s.threadRoot);
-  const typing = useChatStore((s) => s.typing[chatId ?? ""] ?? []);
+  const typing = useChatStore((s) => (chatId ? s.typing[chatId] : undefined) ?? EMPTY_TYPING);
   const rightPanelOpen = useUiStore((s) => s.rightPanelOpen);
   const toggleRightPanel = useUiStore((s) => s.toggleRightPanel);
   const call = useCall();

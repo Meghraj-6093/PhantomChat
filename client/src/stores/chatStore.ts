@@ -7,6 +7,12 @@ interface TypingUser {
   at: number;
 }
 
+// Stable reference so `s.typing[id] ?? EMPTY_TYPING` doesn't create a new
+// array on every selector call — a fresh `[]` literal would compare unequal
+// to itself each render and force subscribers to re-render on any unrelated
+// store update.
+export const EMPTY_TYPING: TypingUser[] = [];
+
 interface ChatUiState {
   activeChatId: string | null;
   replyTo: Message | null;
