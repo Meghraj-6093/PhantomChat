@@ -17,6 +17,7 @@ import { RightPanel } from "./RightPanel";
 import { ThreadPanel } from "./ThreadPanel";
 import { useCall } from "./useCall";
 import { CallOverlay } from "./CallOverlay";
+import { useSocketLive } from "@/hooks/useSocketLive";
 
 export default function ChatPage() {
   const { chatId } = useParams<{ chatId: string }>();
@@ -29,6 +30,7 @@ export default function ChatPage() {
   const rightPanelOpen = useUiStore((s) => s.rightPanelOpen);
   const toggleRightPanel = useUiStore((s) => s.toggleRightPanel);
   const call = useCall();
+  const socketLive = useSocketLive();
 
   useEffect(() => {
     setActiveChat(chatId ?? null);
@@ -121,15 +123,17 @@ export default function ChatPage() {
             <>
               <button
                 onClick={() => call.startCall(otherDmMember.userId, "audio", dmUser?.displayName ?? name, dmUser?.avatarUrl)}
-                className="rounded-xl p-2 text-muted transition hover:bg-slate-700/40 hover:text-slate-100"
-                title="Voice call"
+                disabled={!socketLive}
+                className="rounded-xl p-2 text-muted transition hover:bg-slate-700/40 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                title={socketLive ? "Voice call" : "Calls need a live connection (unavailable on this deployment)"}
               >
                 <Phone className="h-5 w-5" />
               </button>
               <button
                 onClick={() => call.startCall(otherDmMember.userId, "video", dmUser?.displayName ?? name, dmUser?.avatarUrl)}
-                className="rounded-xl p-2 text-muted transition hover:bg-slate-700/40 hover:text-slate-100"
-                title="Video call"
+                disabled={!socketLive}
+                className="rounded-xl p-2 text-muted transition hover:bg-slate-700/40 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                title={socketLive ? "Video call" : "Calls need a live connection (unavailable on this deployment)"}
               >
                 <Video className="h-5 w-5" />
               </button>

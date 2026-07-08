@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getSocket } from "@/lib/socket";
+import { getSocket, isSocketLive } from "@/lib/socket";
 import type { PublicUser } from "@/types";
 
 export type CallState = "idle" | "outgoing" | "incoming" | "active";
@@ -93,7 +93,10 @@ export function useCall(): CallSession {
   const startCall = useCallback(
     async (targetUserId: string, callKind: "audio" | "video", name: string, avatar?: string | null) => {
       const socket = getSocket();
-      if (!socket || state !== "idle") return;
+      // Require a *live* connection: without it the signaling never reaches the
+      // peer, so bail before prompting for camera/mic and leaving a call that
+      // rings forever.
+      if (!socket || !isSocketLive() || state !== "idle") return;
       setKind(callKind);
       setPeerId(targetUserId);
       setPeerName(name);
