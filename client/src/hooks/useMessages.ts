@@ -207,8 +207,73 @@ export function useForwardMessage() {
   });
 }
 
+interface UploadSignature {
+  cloudName: string;
+  apiKey: string;
+  timestamp: number;
+  folder: string;
+  signature: string;
+}
+
+interface CloudinaryResult {
+  public_id: string;
+  url: string;
+  secure_url: string;
+  bytes: number;
+  width?: number;
+  height?: number;
+  duration?: number;
+}
+
+function cloudinaryResourceType(mime: string): "image" | "video" | "raw" {
+  if (mime.startsWith("image/")) return "image";
+  if (mime.startsWith("video/") || mime.startsWith("audio/")) return "video";
+  return "raw";
+}
+
+/**
+ * Upload directly from the browser to Cloudinary, then register the results
+ * with our API. File bytes never pass through the serverless function (which
+ * caps request bodies at ~4.5 MB on Vercel) — only a small JSON payload does.
+ */
 export async function uploadFiles(files: File[]): Promise<Attachment[]> {
-  const formData = new FormData();
-  for (const f of files) formData.append("files", f);
-  return api<Attachment[]>("/uploads", { formData });
+  const sig = await api<UploadSignature>("/uploads/sign", { method: "POST" });
+
+  const uploads = await Promise.all(
+    files.map(async (file) => {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("api_key", sig.apiKey);
+      form.append("timestamp", String(sig.timestamp));
+      form.append("folder", sig.folder);
+      form.append("signature", sig.signature);
+
+      const endpoint = `https://api.cloudinary.com/v1_1/${sig.cloudName}/${cloudinaryResourceType(file.type)}/upload`;
+      const res = await fetch(endpoint, { method: "POST", body: form });
+      if (!res.ok) {
+        let message = `Upload failed (${res.status})`;
+        try {
+          const err = (await res.json()) as { error?: { message?: string } };
+          if (err.error?.message) message = err.error.message;
+        } catch {
+          /* non-JSON error body */
+        }
+        throw new Error(message);
+      }
+      const result = (await res.json()) as CloudinaryResult;
+      return {
+        publicId: result.public_id,
+        url: result.url,
+        secureUrl: result.secure_url,
+        mimeType: file.type || "application/octet-stream",
+        fileName: file.name,
+        sizeBytes: result.bytes ?? file.size,
+        width: result.width ?? null,
+        height: result.height ?? null,
+        durationMs: result.duration ? Math.round(result.duration * 1000) : null,
+      };
+    })
+  );
+
+  return api<Attachment[]>("/uploads", { body: { uploads } });
 }

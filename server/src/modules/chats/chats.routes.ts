@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { requireAuth } from "../../middleware/auth";
+import { chatsLimiter } from "../../middleware/rateLimit";
 import { validate } from "../../middleware/validate";
 import { asyncHandler } from "../../utils/asyncHandler";
 import * as chatsService from "./chats.service";
@@ -23,7 +24,7 @@ const updateChatSchema = z.object({
 });
 
 export const chatsRouter = Router();
-chatsRouter.use(requireAuth);
+chatsRouter.use(requireAuth, chatsLimiter);
 
 chatsRouter.get("/", asyncHandler(async (req, res) => {
   res.json({ success: true, data: await chatsService.listMyChats(req.auth!.sub) });

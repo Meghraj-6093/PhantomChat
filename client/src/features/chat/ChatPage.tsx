@@ -129,7 +129,12 @@ export default function ChatPage() {
             <h2 className="flex items-center gap-1.5 truncate text-sm font-bold">
               {isLoading ? "…" : name}
               {encrypted && (
-                <Lock className="h-3.5 w-3.5 shrink-0 text-success" aria-label="End-to-end encrypted" />
+                <Lock
+                  className="h-3.5 w-3.5 shrink-0 text-success"
+                  aria-label="Messages are end-to-end encrypted (attachments are not)"
+                >
+                  <title>Messages are end-to-end encrypted. Attachments are not yet encrypted.</title>
+                </Lock>
               )}
             </h2>
             <p className={cn("truncate text-xs", typing.length ? "italic text-primary-soft" : "text-muted")}>

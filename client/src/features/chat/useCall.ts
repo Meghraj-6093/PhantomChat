@@ -24,9 +24,27 @@ export interface CallSession {
   toggleScreenShare: () => Promise<void>;
 }
 
-const RTC_CONFIG: RTCConfiguration = {
-  iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }],
-};
+// STUN alone only discovers a public address; it can't relay. On restrictive
+// networks (carrier CGNAT, corporate/campus wifi) the direct peer path fails
+// and the call hangs at "Connecting…". A TURN server relays as a fallback.
+// Configure it via env (comma-separate multiple TURN URLs); without it we stay
+// STUN-only, which is fine for most home/mobile networks.
+const iceServers: RTCIceServer[] = [
+  { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+];
+
+const turnUrl = import.meta.env.VITE_TURN_URL as string | undefined;
+const turnUsername = import.meta.env.VITE_TURN_USERNAME as string | undefined;
+const turnCredential = import.meta.env.VITE_TURN_CREDENTIAL as string | undefined;
+if (turnUrl && turnUsername && turnCredential) {
+  iceServers.push({
+    urls: turnUrl.split(",").map((u) => u.trim()),
+    username: turnUsername,
+    credential: turnCredential,
+  });
+}
+
+const RTC_CONFIG: RTCConfiguration = { iceServers };
 
 export function useCall(): CallSession {
   const [state, setState] = useState<CallState>("idle");

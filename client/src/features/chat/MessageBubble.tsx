@@ -1,6 +1,6 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Lock } from "lucide-react";
+import { Lock, LockOpen } from "lucide-react";
 import {
   SmilePlus, Reply, Pencil, Trash2, Pin, MoreHorizontal, MessagesSquare,
   Check, CheckCheck, Clock, AlertCircle, Download, Forward, Play,
@@ -13,10 +13,11 @@ import { useUiStore } from "@/stores/uiStore";
 import { useDeleteMessage, usePin, useToggleReaction, useSendMessage } from "@/hooks/useMessages";
 import { replaceMessageInCache } from "@/lib/socket";
 import { useCryptoStore } from "@/stores/cryptoStore";
-import { decryptInto } from "@/lib/encryption";
+import { decryptInto, chatIsEncryptable } from "@/lib/encryption";
 import { isEnvelope } from "@/lib/crypto";
 import { useAuthStore } from "@/stores/authStore";
 import { ForwardModal } from "./ForwardModal";
+import { Modal } from "@/components/ui/Modal";
 import type { Chat, Message } from "@/types";
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
@@ -35,6 +36,8 @@ export const MessageBubble = memo(function MessageBubble({
   const [showActions, setShowActions] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [forwardOpen, setForwardOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const setReplyTo = useChatStore((s) => s.setReplyTo);
   const setEditing = useChatStore((s) => s.setEditing);
   const setThreadRootRaw = useChatStore((s) => s.setThreadRoot);
@@ -66,6 +69,21 @@ export const MessageBubble = memo(function MessageBubble({
 
   const canModerate = chat?.myRole && chat.myRole !== "MEMBER";
   const isThreadReply = !!message.threadRootId;
+
+  // Touch devices have no hover, so the desktop action bar is unreachable there.
+  // A long-press opens the same actions as a bottom sheet. Mouse input is left
+  // to the hover bar. Scrolling fires pointermove, which cancels the press.
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse" || message.pending) return;
+    cancelLongPress();
+    longPressTimer.current = setTimeout(() => setSheetOpen(true), 400);
+  };
 
   if (message.isDeleted) {
     return (
@@ -108,6 +126,14 @@ export const MessageBubble = memo(function MessageBubble({
       onMouseLeave={() => {
         setShowActions(false);
         setPickerOpen(false);
+      }}
+      onPointerDown={onPointerDown}
+      onPointerUp={cancelLongPress}
+      onPointerMove={cancelLongPress}
+      onPointerCancel={cancelLongPress}
+      onContextMenu={(e) => {
+        // Suppress the native callout so the long-press opens our sheet instead.
+        if (sheetOpen) e.preventDefault();
       }}
     >
       {/* Avatar column */}
@@ -161,6 +187,16 @@ export const MessageBubble = memo(function MessageBubble({
           {message.attachments.map((att) => (
             <AttachmentView key={att.id} attachment={att} />
           ))}
+          {/* Be honest about the encryption boundary: in an E2EE chat the text
+              is encrypted but attachments still go to Cloudinary in the clear. */}
+          {message.attachments.length > 0 && chat && chatIsEncryptable(chat) && (
+            <span
+              className={cn("mb-1 flex items-center gap-1 text-[10px]", isOwn ? "text-white/60" : "text-muted/70")}
+              title="Attachments aren't encrypted yet, even in an encrypted chat."
+            >
+              <LockOpen className="h-2.5 w-2.5" /> Attachment isn't encrypted
+            </span>
+          )}
           {decrypting ? (
             <span className="inline-flex items-center gap-1 text-xs italic text-muted">
               <Lock className="h-3 w-3" /> Decrypting…
@@ -301,9 +337,78 @@ export const MessageBubble = memo(function MessageBubble({
       )}
 
       <ForwardModal open={forwardOpen} onClose={() => setForwardOpen(false)} message={message} />
+
+      {/* Touch action sheet (opened by long-press) — the hover bar's mobile twin */}
+      <Modal open={sheetOpen} onClose={() => setSheetOpen(false)} title="Message">
+        <div className="mb-3 flex justify-around border-b border-line pb-3">
+          {QUICK_EMOJIS.map((e) => (
+            <button
+              key={e}
+              className="text-2xl transition-transform active:scale-90"
+              onClick={() => {
+                toggleReaction.mutate({ chatId: message.chatId, messageId: message.id, emoji: e });
+                setSheetOpen(false);
+              }}
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col">
+          <SheetItem icon={<Reply className="h-5 w-5" />} label="Reply" onClick={() => { setReplyTo(message); setSheetOpen(false); }} />
+          {!isThreadReply && (
+            <SheetItem icon={<MessagesSquare className="h-5 w-5" />} label="Reply in thread" onClick={() => { setThreadRoot(message); setSheetOpen(false); }} />
+          )}
+          <SheetItem icon={<Forward className="h-5 w-5" />} label="Forward" onClick={() => { setForwardOpen(true); setSheetOpen(false); }} />
+          {isOwn && message.content && (
+            <SheetItem icon={<Pencil className="h-5 w-5" />} label="Edit" onClick={() => { setEditing(message); setSheetOpen(false); }} />
+          )}
+          {canModerate && (
+            <SheetItem icon={<Pin className="h-5 w-5" />} label="Pin" onClick={() => { pinMutation.mutate({ chatId: message.chatId, messageId: message.id, pin: true }); setSheetOpen(false); }} />
+          )}
+          {(isOwn || canModerate) && (
+            <SheetItem
+              icon={<Trash2 className="h-5 w-5" />}
+              label="Delete"
+              danger
+              onClick={() => {
+                setSheetOpen(false);
+                if (confirm("Delete this message?")) {
+                  deleteMessage.mutate({ chatId: message.chatId, messageId: message.id });
+                }
+              }}
+            />
+          )}
+        </div>
+      </Modal>
     </motion.div>
   );
 });
+
+function SheetItem({
+  icon,
+  label,
+  onClick,
+  danger,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition active:scale-[0.98]",
+        danger ? "text-danger hover:bg-danger/10" : "hover:bg-slate-700/40"
+      )}
+    >
+      <span className={danger ? "text-danger" : "text-muted"}>{icon}</span>
+      {label}
+    </button>
+  );
+}
 
 function ActionIcon({
   children,

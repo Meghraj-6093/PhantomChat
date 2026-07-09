@@ -16,6 +16,14 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
 
+  // Optional shared rate-limit store. On a serverless deploy the default
+  // in-memory limiter counters don't persist across function instances, so
+  // limits are effectively toothless. When these are set, rate limiting is
+  // backed by Upstash Redis (REST API, no persistent connection needed) and
+  // holds across instances. When absent, limiters fall back to in-memory.
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GITHUB_CLIENT_ID: z.string().optional(),

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Send, Paperclip, Smile, Mic, X, Pencil, Reply as ReplyIcon,
@@ -37,6 +37,17 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
 
   const sendMessage = useSendMessage();
   const editMessage = useEditMessage();
+
+  // One object URL per attached image, created when the file list changes (not
+  // on every keystroke) and revoked when it changes again or on unmount — so
+  // typing a caption for a photo doesn't leak a new blob URL per character.
+  const filePreviews = useMemo(
+    () => files.map((f) => (f.type.startsWith("image/") ? URL.createObjectURL(f) : null)),
+    [files]
+  );
+  useEffect(() => {
+    return () => filePreviews.forEach((url) => url && URL.revokeObjectURL(url));
+  }, [filePreviews]);
 
   useEffect(() => {
     if (editing) {
@@ -129,6 +140,10 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
 
   // ── Voice recording ──
   const startRecording = async () => {
+    if (typeof MediaRecorder === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setError("Voice recording isn't supported on this browser");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
@@ -156,8 +171,17 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
       setRecording(true);
       setRecordSeconds(0);
       recordTimerRef.current = setInterval(() => setRecordSeconds((s) => s + 1), 1000);
-    } catch {
-      setError("Microphone access denied");
+    } catch (err) {
+      const name = err instanceof Error ? err.name : "";
+      if (name === "NotAllowedError" || name === "SecurityError") {
+        setError("Microphone access denied — allow it in your browser settings");
+      } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+        setError("No microphone found on this device");
+      } else if (name === "NotReadableError") {
+        setError("Your microphone is already in use by another app");
+      } else {
+        setError("Couldn't start recording");
+      }
     }
   };
 
@@ -216,8 +240,8 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
         <div className="mb-2 flex flex-wrap gap-2">
           {files.map((f, i) => (
             <div key={i} className="flex items-center gap-2 rounded-xl border border-line bg-card/60 px-3 py-1.5 text-xs">
-              {f.type.startsWith("image/") ? (
-                <img src={URL.createObjectURL(f)} alt="" className="h-8 w-8 rounded-lg object-cover" />
+              {filePreviews[i] ? (
+                <img src={filePreviews[i]!} alt="" className="h-8 w-8 rounded-lg object-cover" />
               ) : (
                 <Paperclip className="h-4 w-4 text-muted" />
               )}
@@ -268,11 +292,16 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
             type="file"
             multiple
             hidden
-            onChange={(e) => onPickFiles(e.target.files)}
+            onChange={(e) => {
+              onPickFiles(e.target.files);
+              // Clear so picking the same file again still fires onChange.
+              e.currentTarget.value = "";
+            }}
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="rounded-xl p-2.5 text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90"
+            disabled={uploading}
+            className="rounded-xl p-2.5 text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90 disabled:cursor-not-allowed disabled:opacity-40"
             title="Attach files"
           >
             <Paperclip className="h-5 w-5" />
@@ -285,7 +314,8 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
                 fileInputRef.current.accept = "";
               }
             }}
-            className="hidden rounded-xl p-2.5 text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90 sm:block"
+            disabled={uploading}
+            className="hidden rounded-xl p-2.5 text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90 disabled:cursor-not-allowed disabled:opacity-40 sm:block"
             title="Photos & videos"
           >
             <ImagePlus className="h-5 w-5" />
@@ -339,10 +369,11 @@ export function Composer({ chatId, slowModeSeconds }: { chatId: string; slowMode
           ) : (
             <button
               onClick={startRecording}
-              className="flex h-11 w-11 items-center justify-center rounded-2xl border border-line text-muted transition-all hover:text-slate-100 active:scale-90"
+              disabled={uploading}
+              className="flex h-11 w-11 items-center justify-center rounded-2xl border border-line text-muted transition-all hover:text-slate-100 active:scale-90 disabled:cursor-not-allowed disabled:opacity-40"
               title="Voice message"
             >
-              <Mic className="h-5 w-5" />
+              {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mic className="h-5 w-5" />}
             </button>
           )}
         </div>

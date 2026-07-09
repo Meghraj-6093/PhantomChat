@@ -32,15 +32,15 @@ export function NavRail() {
 
   const itemClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      "relative flex h-11 w-11 items-center justify-center rounded-2xl transition-all active:scale-90",
+      "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all active:scale-90",
       isActive
         ? "bg-gradient-brand text-white shadow-glow"
         : "text-muted hover:bg-slate-700/40 hover:text-slate-100"
     );
 
   return (
-    <nav className="flex h-full w-[68px] flex-col items-center gap-2 border-r border-line bg-background/80 py-4 pt-safe backdrop-blur-xl">
-      <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-brand shadow-glow">
+    <nav className="no-scrollbar flex h-full w-[68px] shrink-0 flex-col items-center gap-2 overflow-y-auto border-r border-line bg-background/80 py-4 pt-safe backdrop-blur-xl">
+      <div className="mb-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-brand shadow-glow">
         <Ghost className="h-6 w-6 text-white" />
       </div>
 
@@ -63,7 +63,7 @@ export function NavRail() {
 
       <button
         onClick={() => setNotifOpen(true)}
-        className="relative flex h-11 w-11 items-center justify-center rounded-2xl text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90"
+        className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90"
         title="Notifications"
       >
         <Bell className="h-5 w-5" />
@@ -76,7 +76,7 @@ export function NavRail() {
 
       <button
         onClick={() => setCommandPalette(true)}
-        className="flex h-11 w-11 items-center justify-center rounded-2xl text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-muted transition-all hover:bg-slate-700/40 hover:text-slate-100 active:scale-90"
         title="Search (Ctrl+K)"
       >
         <Search className="h-5 w-5" />
@@ -96,14 +96,14 @@ export function NavRail() {
 
       <button
         onClick={handleLogout}
-        className="flex h-11 w-11 items-center justify-center rounded-2xl text-muted transition-all hover:bg-danger/20 hover:text-danger active:scale-90"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-muted transition-all hover:bg-danger/20 hover:text-danger active:scale-90"
         title="Log out"
       >
         <LogOut className="h-5 w-5" />
       </button>
 
       {user && (
-        <NavLink to="/settings" className="mt-1" title={user.displayName}>
+        <NavLink to="/settings" className="mt-1 shrink-0" title={user.displayName}>
           <Avatar src={user.avatarUrl} name={user.displayName} userId={user.id} size="md" showStatus status="ONLINE" />
         </NavLink>
       )}
